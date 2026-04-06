@@ -1,0 +1,8 @@
+.reviews-page .review-form-card {
+  margin-bottom: 1rem;
+}
+
+.reviews-page textarea {
+  min-height: 120px;
+}
+

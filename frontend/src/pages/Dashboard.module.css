@@ -1,0 +1,68 @@
+.root {
+}
+
+.dashboard {
+  /* Marker class for dashboard page-specific styles */
+}
+
+.jobActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1rem;
+  align-items: center;
+}
+
+.jobActions :global(.input-group) {
+  min-width: 200px;
+}
+
+.applicationsList,
+.submissionsList {
+  margin-top: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  background: #f7f9fc;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.applicationCard {
+  border: 1px solid #e3e8f4;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.submissionCard {
+  border: 1px solid #e3e8f4;
+  border-radius: 12px;
+  padding: 0.75rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.submissionCard header {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.link {
+  color: #2563eb;
+  font-weight: 600;
+}
+
+.submissionForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}

@@ -1,0 +1,130 @@
+.header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: color-mix(in srgb, var(--menu-bg) 72%, transparent);
+    border-bottom: 1px solid var(--border-color);
+    backdrop-filter: blur(18px) saturate(145%);
+    -webkit-backdrop-filter: blur(18px) saturate(145%);
+}
+
+.headerContainer {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.55rem 1.25rem;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.logo {
+    width: 180px;
+    height: 60px;
+    object-fit: cover;
+    display: block;
+}
+
+.actions {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+}
+
+.themeButton {
+    border: 1px solid var(--border-color);
+    border-radius: 999px;
+    padding: 0.42rem 0.78rem;
+    font-size: 0.84rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    color: var(--text-color);
+    background: color-mix(in srgb, var(--surface-bg) 65%, transparent);
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.themeButton:hover {
+    border-color: var(--accent-main);
+    color: var(--accent-main);
+}
+
+.nav {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.navLink {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.42rem 0.66rem;
+    color: var(--text-color);
+    border-radius: 999px;
+    transition: background 0.2s ease;
+    font-size: 0.92rem;
+}
+
+.navLink:hover {
+    background: var(--selection-bg);
+}
+
+.navAuth {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.textButton {
+    border: none;
+    background: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.42rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+}
+
+.textButton:hover {
+    color: var(--text-color);
+}
+
+.mobileMenuButton {
+    display: none;
+    border: none;
+    background: none;
+    font-size: 1.3rem;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.mobileMenu {
+    display: flex;
+}
+
+@media (max-width: 768px) {
+    .nav {
+        display: none;
+        flex-direction: column;
+        align-items: flex-start;
+        width: 100%;
+    }
+
+    .mobileMenu {
+        margin-top: 0.5rem;
+        padding: 0.5rem;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--menu-bg) 78%, transparent);
+        border: 1px solid var(--border-color);
+    }
+
+    .mobileMenuButton {
+        display: inline-flex;
+    }
+
+    .headerContainer {
+        flex-wrap: wrap;
+    }
+}
