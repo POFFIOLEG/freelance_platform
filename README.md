@@ -1,298 +1,111 @@
-## degree_work — дипломный проект
+# Freelance Platform
 
-Этот репозиторий содержит **backend на Django/DRF** и связан с отдельным **frontend‑приложением на JavaScript (Node.js)**, которое находится в соседней директории (обычно `../frontend` относительно корня репозитория).
-
-Проект предназначен для учебных/научных целей в рамках выпускной квалификационной работы.
-
----
-
-## Стек технологий
-
-- **Backend**
-  - **Python** (рекомендуется \>= 3.11)
-  - **Django 6** (`django==6.0.3`)
-  - **Django REST Framework** (`djangorestframework==3.16.1`)
-  - **PostgreSQL** (через `psycopg2-binary`)
-
-- **Frontend**
-  - **Node.js** (LTS‑версия, например 20.x)
-  - **npm** или **yarn** для управления зависимостями
-  - Конкретный фреймворк (React/Vue/Vite и т.п.) — смотрите в `package.json` фронтенда
-
----
+Веб-приложение для фриланс-платформы:
+- backend: Django + Django REST Framework
+- база данных: PostgreSQL
+- администрирование БД: pgAdmin
+- frontend: отдельное приложение в папке `frontend/`
 
 ## Структура проекта
 
-- **`backend/`** — серверная часть на Django/DRF  
-  - `manage.py` — входная точка Django
-  - `config/` — настройки проекта (`settings.py`, `urls.py`, `wsgi.py`, `asgi.py`)
-  - `requirements.txt` — список зависимостей backend
-- **`venv/`** (или `backend/venv/`) — виртуальное окружение Python (локально, **не коммитится в git**)
-- **Frontend** — обычно находится в директории `../frontend`:
-  - `package.json` — скрипты и зависимости фронтенда
-  - `node_modules/` — зависимости фронтенда (локально, **не коммитится в git**)
+- `backend/` — серверная часть Django
+- `frontend/` — клиентская часть
+- `docker-compose.yml` — запуск backend, PostgreSQL и pgAdmin
 
----
+## Требования
 
-## Подготовка окружения
+- Docker Desktop (Windows/macOS) или Docker Engine + Docker Compose (Linux)
+- Свободные порты: `5432` (PostgreSQL), `8000` (backend), `5050` (pgAdmin)
 
-- **ОС**: Windows 10/11 (поддерживаются и Linux/macOS, команды будут немного отличаться)
-- **Необходимые инструменты**:
-  - Установленный **Python \>= 3.11**
-  - Установленный **PostgreSQL** (сервер и клиентские утилиты)
-  - Установленный **Node.js LTS** (вместе с npm)
-  - Git
+## Быстрый запуск через Docker
 
----
-
-## Установка и запуск backend (Django)
-
-Все команды ниже выполняются из директории `backend/`.
-
-### 1. Клонирование репозитория
+Из корня проекта:
 
 ```bash
-git clone <URL_ВАШЕГО_РЕПОЗИТОРИЯ> degree_work
-cd degree_work/backend
+docker compose up -d
 ```
 
-### 2. Создание и активация виртуального окружения
+После запуска будут доступны:
+- backend: `http://localhost:8000`
+- pgAdmin: `http://localhost:5050`
 
-**Windows (PowerShell):**
+## Доступ к pgAdmin
+
+Параметры входа:
+- Email: `admin@admin.com`
+- Password: `admin123`
+
+### Подключение сервера PostgreSQL в pgAdmin
+
+1. Открыть `http://localhost:5050`
+2. Войти под учётными данными выше
+3. Нажать **Register -> Server**
+4. Заполнить:
+   - **General / Name**: `freelance_db` (любое имя)
+   - **Connection / Host name/address**: `db`
+   - **Port**: `5432`
+   - **Maintenance database**: `freelance_db`
+   - **Username**: `freelance_user`
+   - **Password**: `freelance_pass`
+5. Сохранить
+
+## Миграции Django
+
+Вариант 1 (если сервисы уже подняты):
 
 ```bash
-python -m venv venv
-.\venv\Scripts\Activate.ps1
+docker compose exec backend python manage.py migrate
 ```
 
-**Windows (cmd.exe):**
+Вариант 2 (разовый запуск контейнера):
 
 ```bash
-python -m venv venv
-venv\Scripts\activate.bat
+docker compose run --rm backend python manage.py migrate
 ```
 
-**Linux/macOS (для справки):**
+## Создание суперпользователя
 
 ```bash
-python3 -m venv venv
-source venv/bin/activate
+docker compose exec backend python manage.py createsuperuser
 ```
 
-### 3. Установка Python‑зависимостей
+## Полезные команды
+
+Остановить проект:
 
 ```bash
-pip install --upgrade pip
+docker compose down
+```
+
+Остановить и удалить тома БД:
+
+```bash
+docker compose down -v
+```
+
+Просмотр логов:
+
+```bash
+docker compose logs -f
+```
+
+## Переменные и параметры по умолчанию
+
+В текущей конфигурации используются значения:
+- DB: `freelance_db`
+- DB user: `freelance_user`
+- DB password: `freelance_pass`
+
+При необходимости их можно изменить в `docker-compose.yml`.
+
+## Локальный запуск backend без Docker (опционально)
+
+Из папки `backend/`:
+
+```bash
+python -m venv .venv
+.venv\Scripts\activate
 pip install -r requirements.txt
-```
-
-### 4. Настройка переменных окружения / `.env`
-
-Создайте файл `.env` в директории `backend/` (рядом с `manage.py`) и укажите в нём необходимые переменные, например:
-
-```bash
-DEBUG=True
-SECRET_KEY=замените_на_случайную_строку
-DB_NAME=имя_вашей_базы
-DB_USER=пользователь_postgres
-DB_PASSWORD=пароль_postgres
-DB_HOST=localhost
-DB_PORT=5432
-```
-
-Фактический набор переменных может отличаться в зависимости от реализации настроек в `config/settings.py`. При необходимости откорректируйте `.env` под используемую конфигурацию.
-
-### 5. Применение миграций базы данных
-
-```bash
 python manage.py migrate
-```
-
-### 6. Создание суперпользователя (опционально, для доступа в админку)
-
-```bash
-python manage.py createsuperuser
-```
-
-### 7. Запуск сервера разработки
-
-```bash
 python manage.py runserver
 ```
-
-Backend по умолчанию будет доступен по адресу `http://127.0.0.1:8000/`.
-
----
-
-## Установка и запуск frontend
-
-Фронтенд находится **вне этого репозитория**, как отдельный проект (обычно `../frontend` относительно корня). Общая схема работы следующая:
-
-### 1. Переход в каталог фронтенда
-
-Из корня репозитория:
-
-```bash
-cd ..
-cd frontend
-```
-
-Либо сразу:
-
-```bash
-cd ../frontend
-```
-
-### 2. Установка зависимостей
-
-```bash
-npm install
-```
-
-или, если используете yarn:
-
-```bash
-yarn
-```
-
-### 3. Настройка переменных окружения фронтенда
-
-Обычно фронтенд использует файл `.env` или `.env.local` в корне фронтенд‑проекта.  
-Создайте его и укажите адрес backend‑API, например:
-
-```bash
-VITE_API_URL=http://127.0.0.1:8000/api
-```
-
-или, для Create React App:
-
-```bash
-REACT_APP_API_URL=http://127.0.0.1:8000/api
-```
-
-Проверьте точные имена переменных в коде фронтенда и в `package.json`.
-
-### 4. Запуск фронтенда в dev‑режиме
-
-Ознакомьтесь с разделом `"scripts"` в `package.json`. Чаще всего используются:
-
-- Для **Create React App**:
-
-  ```bash
-  npm start
-  ```
-
-- Для **Vite/современных шаблонов**:
-
-  ```bash
-  npm run dev
-  ```
-
-или аналогичные команды на `yarn`:
-
-```bash
-yarn start
-```
-
-или
-
-```bash
-yarn dev
-```
-
-После запуска фронтенд обычно доступен по адресу `http://127.0.0.1:3000/` или `http://127.0.0.1:5173/` (для Vite).
-
----
-
-## Типичный сценарий разработки
-
-1. **Запустить backend**:
-   - Активировать виртуальное окружение
-   - Выполнить `python manage.py runserver`
-2. **Запустить frontend**:
-   - В отдельном терминале перейти в каталог фронтенда
-   - Выполнить `npm start` или `npm run dev` (в зависимости от проекта)
-3. Разрабатывать функциональность, при необходимости обновляя обоих клиентов (API и UI).
-
----
-
-## Полезные команды (backend)
-
-- **Сбор статических файлов (если используется)**:
-
-  ```bash
-  python manage.py collectstatic
-  ```
-
-- **Просмотр доступных команд Django**:
-
-  ```bash
-  python manage.py help
-  ```
-
----
-
-## Код‑стайл, Ruff и pre-commit
-
-### Ruff (линтер и форматтер для Python)
-
-В корне репозитория настроен **Ruff** через файл `pyproject.toml`. Он проверяет и форматирует Python‑код в директории `backend/`.
-
-- **Установка Ruff (внутри виртуального окружения backend):**
-
-  ```bash
-  pip install ruff
-  ```
-
-- **Запуск проверки:**
-
-  ```bash
-  ruff check backend
-  ```
-
-- **Автоисправление:**
-
-  ```bash
-  ruff check backend --fix
-  ```
-
-- **Форматирование кода:**
-
-  ```bash
-  ruff format backend
-  ```
-
-### pre-commit (автоматические проверки перед коммитом)
-
-В корне репозитория есть конфигурация `.pre-commit-config.yaml`, которая:
-
-- запускает Ruff (линтинг и форматирование Python‑кода),
-- выполняет стандартные проверки (`trailing-whitespace`, `end-of-file-fixer`, поиск конфликтов и больших файлов).
-
-**Установка pre-commit (в виртуальном окружении backend):**
-
-```bash
-pip install pre-commit
-```
-
-**Установка git‑хуков один раз для репозитория:**
-
-```bash
-pre-commit install
-```
-
-После этого при каждом `git commit` автоматически будут запускаться проверки.  
-Чтобы вручную прогнать все хуки по всем файлам:
-
-```bash
-pre-commit run --all-files
-```
-
----
-
-## Лицензия и авторство
-
-- **Автор**: укажите своё ФИО
-- **Назначение**: дипломный/курсовой проект (образовательные цели)
-- **Лицензия**: при необходимости добавьте раздел с лицензией (MIT/GPL/проприетарная и т.д.)
-

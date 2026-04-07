@@ -77,3 +77,6 @@ desktop.ini
 # Ruff / pre-commit
 .ruff_cache/
 .pre-commit-config.yaml~
+
+
+.доработки.txt
