@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework.authtoken import views as drf_views
 
-from .views import RegisterView, LoginView, ProfileView, CurrentUserView
+from .views import RegisterView, LoginView, ProfileView, CurrentUserView, SwitchRoleView
 
 urlpatterns = [
     path("register/", RegisterView.as_view(), name="register"),
@@ -9,5 +9,6 @@ urlpatterns = [
     path("token/", drf_views.obtain_auth_token, name="token"),
     path("me/", CurrentUserView.as_view(), name="current-user"),
     path("profile/", ProfileView.as_view(), name="profile"),
+    path("switch-role/", SwitchRoleView.as_view(), name="switch-role"),
 ]
 

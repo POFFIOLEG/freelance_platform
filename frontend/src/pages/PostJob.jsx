@@ -3,6 +3,26 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { jobApi } from "../api/client.js";
 import styles from "./PostJob.module.css";
 
+const SKILLS_SUGGESTIONS = [
+  "React",
+  "TypeScript",
+  "Django",
+  "Python",
+  "UI/UX",
+  "Figma",
+  "PostgreSQL",
+  "Node.js",
+];
+
+const LOCATION_SUGGESTIONS = [
+  "Москва",
+  "Санкт-Петербург",
+  "Казань",
+  "Новосибирск",
+  "Екатеринбург",
+  "Удаленно",
+];
+
 const initialState = {
   title: "",
   description: "",
@@ -13,6 +33,8 @@ const initialState = {
   deadline: "",
   skills_required: "",
   attachments: "",
+  is_contest: false,
+  is_exchange: false,
 };
 
 const PostJob = () => {
@@ -111,7 +133,13 @@ const PostJob = () => {
                 value={form.location}
                 onChange={(event) => setField("location", event.target.value)}
                 placeholder="Москва / удаленно"
+                list="location-suggestions"
               />
+              <datalist id="location-suggestions">
+                {LOCATION_SUGGESTIONS.map((item) => (
+                  <option key={item} value={item} />
+                ))}
+              </datalist>
             </div>
           </div>
           <div className="input-row">
@@ -158,7 +186,31 @@ const PostJob = () => {
               value={form.skills_required}
               onChange={(event) => setField("skills_required", event.target.value)}
               placeholder="React, UX, Python"
+              list="skills-suggestions"
             />
+            <datalist id="skills-suggestions">
+              {SKILLS_SUGGESTIONS.map((item) => (
+                <option key={item} value={item} />
+              ))}
+            </datalist>
+          </div>
+          <div className="input-row">
+            <label className="input-group">
+              <span>Розыгрыш исполнителя</span>
+              <input
+                type="checkbox"
+                checked={form.is_contest}
+                onChange={(event) => setField("is_contest", event.target.checked)}
+              />
+            </label>
+            <label className="input-group">
+              <span>Торги (биржа)</span>
+              <input
+                type="checkbox"
+                checked={form.is_exchange}
+                onChange={(event) => setField("is_exchange", event.target.checked)}
+              />
+            </label>
           </div>
           {status.message && (
             <p className={status.type === "error" ? "error-text" : "success-text"}>{status.message}</p>

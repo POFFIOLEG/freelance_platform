@@ -10,6 +10,7 @@ class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
         fields = [
+            "demo_balance",
             "headline",
             "bio",
             "skills",
@@ -20,6 +21,7 @@ class ProfileSerializer(serializers.ModelSerializer):
             "availability",
             "portfolio_url",
         ]
+        read_only_fields = ["demo_balance"]
 
 
 class UserSerializer(serializers.ModelSerializer):

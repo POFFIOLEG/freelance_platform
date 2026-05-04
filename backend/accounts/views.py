@@ -53,3 +53,15 @@ class CurrentUserView(generics.RetrieveAPIView):
     def get_object(self):
         return self.request.user
 
+
+class SwitchRoleView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        role = request.data.get("role")
+        if role not in User.Roles.values:
+            return Response({"detail": "Неверная роль"}, status=status.HTTP_400_BAD_REQUEST)
+        request.user.role = role
+        request.user.save(update_fields=["role"])
+        return Response({"user": UserSerializer(request.user).data})
+

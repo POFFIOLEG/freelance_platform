@@ -28,6 +28,13 @@ const JobCard = ({ job, children }) => (
       <div>
         <h4>{job.title}</h4>
         <p className="muted-text">{job.category || "Без категории"}</p>
+        {(job.is_contest || job.is_exchange) && (
+          <p className="muted-text">
+            {job.is_contest ? "Розыгрыш" : ""}
+            {job.is_contest && job.is_exchange ? " • " : ""}
+            {job.is_exchange ? "Торги" : ""}
+          </p>
+        )}
       </div>
       <span className={`status-pill status-${job.status}`}>{statusLabels[job.status] || job.status}</span>
     </div>

@@ -86,6 +86,13 @@ export const authApi = {
       });
     },
   },
+  async switchRole(role, token) {
+    return apiFetch("/api/auth/switch-role/", {
+      method: "POST",
+      body: { role },
+      token,
+    });
+  },
 };
 
 export const jobApi = {
@@ -113,6 +120,13 @@ export const jobApi = {
       token,
     });
   },
+  async closeApplication(jobId, applicationId, token) {
+    return apiFetch(`/api/jobs/${jobId}/close_application/`, {
+      method: "POST",
+      body: { application_id: applicationId },
+      token,
+    });
+  },
   async submissions(jobId, token) {
     return apiFetch(`/api/jobs/${jobId}/submissions/`, {
       method: "GET",
@@ -133,8 +147,31 @@ export const jobApi = {
       token,
     });
   },
+  async approveSubmission(jobId, submissionId, token) {
+    return apiFetch(`/api/jobs/${jobId}/approve_submission/`, {
+      method: "POST",
+      body: { submission_id: submissionId },
+      token,
+    });
+  },
   async dashboard(token) {
     return apiFetch("/api/jobs/dashboard/", { method: "GET", token });
+  },
+  async bids(jobId, token) {
+    return apiFetch(`/api/jobs/${jobId}/bid/`, { method: "GET", token });
+  },
+  async placeBid(jobId, payload, token) {
+    return apiFetch(`/api/jobs/${jobId}/bid/`, {
+      method: "POST",
+      body: payload,
+      token,
+    });
+  },
+  async pickContestWinner(jobId, token) {
+    return apiFetch(`/api/jobs/${jobId}/pick_contest_winner/`, {
+      method: "POST",
+      token,
+    });
   },
 };
 

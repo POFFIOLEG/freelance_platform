@@ -37,6 +37,8 @@ class Job(models.Model):
     )
     skills_required = models.JSONField(default=list, blank=True)
     attachments = models.URLField(blank=True)
+    is_contest = models.BooleanField(default=False)
+    is_exchange = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -107,3 +109,22 @@ class JobStatusUpdate(models.Model):
 
     class Meta:
         ordering = ["-created_at"]
+
+
+class JobBid(models.Model):
+    job = models.ForeignKey(Job, on_delete=models.CASCADE, related_name="bids")
+    worker = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="bids",
+    )
+    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    message = models.CharField(max_length=240, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["amount", "created_at"]
+        unique_together = ("job", "worker")
+
+    def __str__(self):
+        return f"Bid {self.amount} for {self.job_id} by {self.worker_id}"

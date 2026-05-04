@@ -10,6 +10,7 @@ const AuthContext = createContext({
   logout: () => {},
   updateProfile: async () => {},
   refreshProfile: async () => {},
+  switchRole: async () => {},
 });
 
 export const AuthProvider = ({ children }) => {
@@ -97,6 +98,15 @@ export const AuthProvider = ({ children }) => {
     return profile;
   };
 
+  const switchRole = async (role) => {
+    if (!token) {
+      throw new Error("Требуется авторизация");
+    }
+    const response = await authApi.switchRole(role, token);
+    setUser(response.user);
+    return response.user;
+  };
+
   const value = useMemo(
     () => ({
       user,
@@ -107,6 +117,7 @@ export const AuthProvider = ({ children }) => {
       logout,
       updateProfile,
       refreshProfile,
+      switchRole,
     }),
     [user, token, loading],
   );

@@ -31,25 +31,6 @@
     gap: 0.65rem;
 }
 
-.themeButton {
-    border: 1px solid var(--border-color);
-    border-radius: 999px;
-    padding: 0.42rem 0.78rem;
-    font-size: 0.84rem;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.45rem;
-    color: var(--text-color);
-    background: color-mix(in srgb, var(--surface-bg) 65%, transparent);
-    cursor: pointer;
-    transition: all 0.2s ease;
-}
-
-.themeButton:hover {
-    border-color: var(--accent-main);
-    color: var(--accent-main);
-}
-
 .nav {
     display: flex;
     align-items: center;
@@ -77,18 +58,126 @@
     gap: 0.5rem;
 }
 
-.textButton {
-    border: none;
-    background: none;
-    color: var(--text-secondary);
-    cursor: pointer;
-    padding: 0.42rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
+.notificationButton {
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-bg) 65%, transparent);
+  border-radius: 999px;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-color);
+  position: relative;
+  cursor: pointer;
 }
 
-.textButton:hover {
-    color: var(--text-color);
+.profileButton {
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-bg) 65%, transparent);
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.dropdownWrap {
+  position: relative;
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 280px;
+  border: 1px solid var(--border-color);
+  border-radius: 12px;
+  padding: 0.7rem;
+  background: color-mix(in srgb, var(--surface-bg) 92%, transparent);
+  backdrop-filter: blur(14px);
+  z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.dropdownMenu h4 {
+  margin: 0;
+}
+
+.notificationItem {
+  border: 1px solid var(--border-color);
+  border-radius: 10px;
+  padding: 0.45rem 0.55rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  font-size: 0.84rem;
+  width: 100%;
+  text-align: left;
+  background: color-mix(in srgb, var(--surface-bg) 72%, transparent);
+  color: var(--text-color);
+  cursor: pointer;
+}
+
+.notificationItem:hover {
+  border-color: var(--accent-main);
+}
+
+.notificationItem span {
+  color: var(--text-secondary);
+}
+
+.dropdownLink {
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+}
+
+.dropdownLink:hover {
+  background: var(--selection-bg);
+}
+
+.dropdownField {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.roleSelect {
+  width: 100%;
+  padding: 0.4rem 0.55rem;
+  font-size: 0.85rem;
+}
+
+.dropdownButton {
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-bg) 70%, transparent);
+  border-radius: 8px;
+  padding: 0.45rem 0.55rem;
+  text-align: left;
+  cursor: pointer;
+  color: var(--text-color);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.unreadDot {
+  position: absolute;
+  top: -5px;
+  right: -4px;
+  min-width: 17px;
+  height: 17px;
+  border-radius: 999px;
+  background: var(--accent-main);
+  color: var(--on-accent-text);
+  font-size: 0.68rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .mobileMenuButton {

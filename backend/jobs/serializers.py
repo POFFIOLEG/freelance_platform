@@ -1,7 +1,7 @@
 from rest_framework import serializers
 
 from accounts.serializers import UserSerializer
-from .models import Job, JobApplication, WorkSubmission, JobStatusUpdate
+from .models import Job, JobApplication, WorkSubmission, JobStatusUpdate, JobBid
 
 
 class JobSerializer(serializers.ModelSerializer):
@@ -30,6 +30,8 @@ class JobSerializer(serializers.ModelSerializer):
             "status",
             "skills_required",
             "attachments",
+            "is_contest",
+            "is_exchange",
             "employer",
             "assigned_to",
             "applications_count",
@@ -60,6 +62,7 @@ class JobApplicationSerializer(serializers.ModelSerializer):
 
 class WorkSubmissionSerializer(serializers.ModelSerializer):
     worker = UserSerializer(read_only=True)
+    deliverable_url = serializers.URLField(required=False, allow_blank=True)
 
     class Meta:
         model = WorkSubmission
@@ -82,4 +85,13 @@ class JobStatusUpdateSerializer(serializers.ModelSerializer):
     class Meta:
         model = JobStatusUpdate
         fields = ["id", "status", "note", "created_by", "created_at"]
+
+
+class JobBidSerializer(serializers.ModelSerializer):
+    worker = UserSerializer(read_only=True)
+
+    class Meta:
+        model = JobBid
+        fields = ["id", "job", "worker", "amount", "message", "created_at"]
+        read_only_fields = ["job", "worker", "created_at"]
 

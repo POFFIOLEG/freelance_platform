@@ -1,18 +1,29 @@
 import { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import { jobApi } from "../api/client.js";
 import { useAuth } from "../context/AuthContext.jsx";
 import JobCard from "../components/JobCard.jsx";
 import styles from "./JobList.module.css";
 
 const initialFilters = { q: "", category: "", location: "", status: "" };
+const LOCATION_SUGGESTIONS = [
+  "Москва",
+  "Санкт-Петербург",
+  "Казань",
+  "Новосибирск",
+  "Екатеринбург",
+  "Удаленно",
+];
 
 const JobList = () => {
+  const location = useLocation();
   const { user, token } = useAuth();
   const [filters, setFilters] = useState({ ...initialFilters });
   const [appliedFilters, setAppliedFilters] = useState({ ...initialFilters });
   const [jobs, setJobs] = useState([]);
   const [expandedJob, setExpandedJob] = useState(null);
   const [applicationDrafts, setApplicationDrafts] = useState({});
+  const [bidDrafts, setBidDrafts] = useState({});
   const [status, setStatus] = useState({ type: null, message: "" });
   const [loading, setLoading] = useState(false);
 
@@ -32,6 +43,18 @@ const JobList = () => {
   useEffect(() => {
     fetchJobs();
   }, [appliedFilters]);
+
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const next = {
+      q: params.get("q") || "",
+      category: params.get("category") || "",
+      location: params.get("location") || "",
+      status: params.get("status") || "",
+    };
+    setFilters(next);
+    setAppliedFilters(next);
+  }, [location.search]);
 
   const handleFilterSubmit = (event) => {
     event.preventDefault();
@@ -88,6 +111,35 @@ const JobList = () => {
     }
   };
 
+  const submitBid = async (jobId) => {
+    if (!token) {
+      setStatus({ type: "error", message: "Авторизуйтесь, чтобы сделать ставку" });
+      return;
+    }
+    const draft = bidDrafts[jobId];
+    if (!draft?.amount) {
+      setStatus({ type: "error", message: "Укажите сумму ставки" });
+      return;
+    }
+    try {
+      await jobApi.placeBid(
+        jobId,
+        {
+          amount: Number(draft.amount),
+          message: draft.message || "",
+        },
+        token,
+      );
+      setStatus({ type: "success", message: "Ставка отправлена" });
+      setBidDrafts((prev) => ({
+        ...prev,
+        [jobId]: { amount: "", message: "" },
+      }));
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    }
+  };
+
   return (
     <div className={`page job-page ${styles.root}`}>
       <div className="card">
@@ -107,7 +159,13 @@ const JobList = () => {
             placeholder="Локация"
             value={filters.location}
             onChange={(event) => updateFilter("location", event.target.value)}
+            list="joblist-location-suggestions"
           />
+          <datalist id="joblist-location-suggestions">
+            {LOCATION_SUGGESTIONS.map((item) => (
+              <option key={item} value={item} />
+            ))}
+          </datalist>
           <select value={filters.status} onChange={(event) => updateFilter("status", event.target.value)}>
             <option value="">Все статусы</option>
             <option value="open">Открыто</option>
@@ -136,6 +194,42 @@ const JobList = () => {
         <div className="job-grid">
           {jobs.map((job) => (
             <JobCard key={job.id} job={job}>
+              {job.is_exchange && user?.role === "worker" && (
+                <div className="apply-section">
+                  <h4>Торги по заданию</h4>
+                  <form
+                    className="apply-form"
+                    onSubmit={(event) => {
+                      event.preventDefault();
+                      submitBid(job.id);
+                    }}
+                  >
+                    <input
+                      type="number"
+                      placeholder="Сумма ставки"
+                      min={0}
+                      value={bidDrafts[job.id]?.amount || ""}
+                      onChange={(event) =>
+                        setBidDrafts((prev) => ({
+                          ...prev,
+                          [job.id]: { ...(prev[job.id] || {}), amount: event.target.value },
+                        }))
+                      }
+                    />
+                    <input
+                      placeholder="Комментарий к ставке"
+                      value={bidDrafts[job.id]?.message || ""}
+                      onChange={(event) =>
+                        setBidDrafts((prev) => ({
+                          ...prev,
+                          [job.id]: { ...(prev[job.id] || {}), message: event.target.value },
+                        }))
+                      }
+                    />
+                    <button className="primary-button">Сделать ставку</button>
+                  </form>
+                </div>
+              )}
               {user?.role === "worker" && job.status === "open" && job.employer.id !== user.id && (
                 <div className="apply-section">
                   <button className="secondary-button" type="button" onClick={() => toggleApply(job.id)}>

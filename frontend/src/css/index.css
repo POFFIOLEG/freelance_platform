@@ -28,6 +28,13 @@
   --inactive-color: #424444;
   --tooltip-bg: #eef2f5;
   --tooltip-text: #5d6c80;
+  --on-accent-text: #ffffff;
+  --pill-bg: #e0e7ff;
+  --pill-text: #1e3a8a;
+  --soft-surface: #f8fafc;
+  --soft-border: #e2e8f0;
+  --chip-bg: #f1f5f9;
+  --chip-text: #334155;
   --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
   --glass-border: rgba(255, 255, 255, 0.35);
 }
@@ -54,6 +61,13 @@
   --inactive-color: #424444;
   --tooltip-bg: #363838;
   --tooltip-text: #ffffff;
+  --on-accent-text: #ffffff;
+  --pill-bg: #114066;
+  --pill-text: #ffffff;
+  --soft-surface: #3d3c3c;
+  --soft-border: #424444;
+  --chip-bg: #363838;
+  --chip-text: #ffffff;
   --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.45);
   --glass-border: rgba(255, 255, 255, 0.12);
 }
@@ -81,8 +95,8 @@ a {
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #ffffff;
-  border-bottom: 1px solid #e2e8f0;
+  background: color-mix(in srgb, var(--menu-bg) 72%, transparent);
+  border-bottom: 1px solid var(--border-color);
 }
 
 .header-container {
@@ -100,7 +114,7 @@ a {
   align-items: center;
   gap: 0.75rem;
   font-size: 1.1rem;
-  color: #0f172a;
+  color: var(--text-color);
 }
 
 .logo {
@@ -121,13 +135,13 @@ a {
   align-items: center;
   gap: 0.25rem;
   padding: 0.5rem 0.75rem;
-  color: #334155;
+  color: var(--text-color);
   border-radius: 999px;
   transition: background 0.2s ease;
 }
 
 .nav-link:hover {
-  background: #e2e8f0;
+  background: var(--selection-bg);
 }
 
 .nav-auth {
@@ -139,14 +153,14 @@ a {
 .text-button {
   border: none;
   background: none;
-  color: #64748b;
+  color: var(--text-secondary);
   cursor: pointer;
   padding: 0.5rem;
   border-radius: 8px;
 }
 
 .text-button:hover {
-  color: #0f172a;
+  color: var(--text-color);
 }
 
 .primary-button {
@@ -154,7 +168,7 @@ a {
   border-radius: 999px;
   /* background: linear-gradient(135deg, var(--accent-main), var(--accent-hover)); */
   background: color-mix(in srgb, var(--accent-hover) 60%, transparent);
-  color: #fff;
+  color: var(--on-accent-text);
   padding: 0.55rem 1.5rem;
   font-weight: 600;
   cursor: pointer;
@@ -280,7 +294,7 @@ textarea {
 }
 
 .job-card {
-  border: 1px solid #eef2ff;
+  border: 1px solid var(--soft-border);
   border-radius: 18px;
   padding: 1.25rem;
   display: flex;
@@ -298,8 +312,8 @@ textarea {
   border-radius: 999px;
   padding: 0.25rem 0.85rem;
   font-size: 0.85rem;
-  background: #e0e7ff;
-  color: #312e81;
+  background: var(--pill-bg);
+  color: var(--pill-text);
 }
 
 .job-card-meta {
@@ -315,7 +329,8 @@ textarea {
 }
 
 .skills-list span {
-  background: #f1f5f9;
+  background: var(--chip-bg);
+  color: var(--chip-text);
   border-radius: 999px;
   padding: 0.25rem 0.75rem;
   font-size: 0.85rem;
@@ -329,7 +344,7 @@ textarea {
 }
 
 .job-card-extra {
-  border-top: 1px solid #eef2ff;
+  border-top: 1px solid var(--soft-border);
   padding-top: 1rem;
 }
 
@@ -366,7 +381,7 @@ textarea {
   padding: 0.2rem 0.65rem;
   border-radius: 999px;
   background: rgba(37, 99, 235, 0.12);
-  color: #1e3a8a;
+  color: var(--pill-text);
   font-size: 0.85rem;
 }
 
@@ -392,8 +407,8 @@ textarea {
 .highlight-card {
   padding: 1rem;
   border-radius: 16px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--soft-surface);
+  border: 1px solid var(--soft-border);
 }
 
 .messages-container {
@@ -441,7 +456,7 @@ textarea {
 
 .review-card {
   border-radius: 14px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--soft-border);
   padding: 1rem;
 }
 
@@ -453,14 +468,14 @@ textarea {
 }
 
 .rating {
-  color: #f97316;
+  color: var(--accent-main);
 }
 
 .stat-card {
   padding: 1rem;
   border-radius: 14px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
+  background: var(--soft-surface);
+  border: 1px solid var(--soft-border);
 }
 
 .stats-row {
@@ -478,7 +493,7 @@ textarea {
 }
 
 .application-card {
-  border: 1px solid #e2e8f0;
+  border: 1px solid var(--soft-border);
   border-radius: 12px;
   padding: 0.75rem;
   display: flex;

@@ -19,6 +19,7 @@ class User(AbstractUser):
 
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
+    demo_balance = models.DecimalField(max_digits=12, decimal_places=2, default=100000)
     headline = models.CharField(max_length=120, blank=True)
     bio = models.TextField(blank=True)
     skills = models.JSONField(default=list, blank=True)

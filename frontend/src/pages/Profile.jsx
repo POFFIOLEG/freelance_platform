@@ -93,6 +93,9 @@ const Profile = () => {
         <p className="muted-text">
           {user.role === "employer" ? "Работодатель" : "Исполнитель"} • {user.email}
         </p>
+        <p className="badge">
+          Пробный баланс: {Number(user.profile?.demo_balance || 0).toLocaleString("ru-RU")} ₽
+        </p>
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="input-group">
             <label>Заголовок</label>

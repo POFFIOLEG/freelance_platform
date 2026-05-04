@@ -1,0 +1,22 @@
+.root {
+  margin-top: 1.2rem;
+  border-top: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--surface-bg) 82%, transparent);
+}
+
+.inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 1rem 1.25rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.links {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+}

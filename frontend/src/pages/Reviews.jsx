@@ -28,7 +28,10 @@ const Reviews = () => {
       if (!token) return;
       try {
         const dashboard = await jobApi.dashboard(token);
-        setJobs([...(dashboard.owned || []), ...(dashboard.assigned || [])]);
+        const completed = [...(dashboard.owned || []), ...(dashboard.assigned || [])].filter(
+          (job) => job.status === "completed",
+        );
+        setJobs(completed);
       } catch (error) {
         setStatus({ type: "error", message: error.message });
       }
@@ -73,6 +76,9 @@ const Reviews = () => {
           История сотрудничества между работодателями и исполнителями. Оставляйте отзывы после
           завершения задания.
         </p>
+        {user && jobs.length === 0 && (
+          <p className="muted-text">Отзывы доступны после завершения хотя бы одного задания.</p>
+        )}
         {status.message && (
           <p className={status.type === "error" ? "error-text" : "success-text"}>{status.message}</p>
         )}
