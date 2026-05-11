@@ -1,4 +1,5 @@
 from django.shortcuts import get_object_or_404
+from django.db.models import Q
 from decimal import Decimal
 import random
 from rest_framework import viewsets, status
@@ -49,12 +50,53 @@ class JobViewSet(viewsets.ModelViewSet):
         status_param = request.query_params.get("status")
         if status_param:
             qs = qs.filter(status=status_param)
+        budget_from = request.query_params.get("budget_from")
+        if budget_from:
+            try:
+                qs = qs.filter(budget_max__gte=Decimal(budget_from))
+            except (ValueError, ArithmeticError):
+                pass
+        budget_to = request.query_params.get("budget_to")
+        if budget_to:
+            try:
+                qs = qs.filter(budget_min__lte=Decimal(budget_to))
+            except (ValueError, ArithmeticError):
+                pass
         category = request.query_params.get("category")
         if category:
             qs = qs.filter(category__iexact=category)
+        categories = request.query_params.get("categories")
+        if categories:
+            category_values = [item.strip() for item in categories.split(",") if item.strip()]
+            if category_values:
+                category_query = Q()
+                for item in category_values:
+                    category_query |= Q(category__iexact=item)
+                qs = qs.filter(category_query)
+        subcategory = request.query_params.get("subcategory")
+        if subcategory:
+            qs = qs.filter(subcategory__iexact=subcategory)
+        subcategories = request.query_params.get("subcategories")
+        if subcategories:
+            subcategory_values = [item.strip() for item in subcategories.split(",") if item.strip()]
+            if subcategory_values:
+                subcategory_query = Q()
+                for item in subcategory_values:
+                    subcategory_query |= Q(subcategory__iexact=item)
+                qs = qs.filter(subcategory_query)
+        country = request.query_params.get("country")
+        if country and country != "all":
+            qs = qs.filter(country__iexact=country)
+        city = request.query_params.get("city")
+        if city and city != "all":
+            qs = qs.filter(city__iexact=city)
         location = request.query_params.get("location")
         if location:
             qs = qs.filter(location__icontains=location)
+        if request.query_params.get("urgent"):
+            qs = qs.filter(is_urgent=True)
+        if request.query_params.get("without_assignee"):
+            qs = qs.filter(assigned_to__isnull=True)
         mine = request.query_params.get("mine")
         if mine and request.user.is_authenticated:
             qs = qs.filter(employer=request.user)
@@ -64,6 +106,13 @@ class JobViewSet(viewsets.ModelViewSet):
         if request.query_params.get("contest"):
             qs = qs.filter(is_contest=True)
         if request.query_params.get("exchange"):
+            qs = qs.filter(is_exchange=True)
+        job_type = request.query_params.get("type")
+        if job_type == "order":
+            qs = qs.filter(is_contest=False, is_exchange=False)
+        elif job_type == "contest":
+            qs = qs.filter(is_contest=True)
+        elif job_type == "exchange":
             qs = qs.filter(is_exchange=True)
         return qs.order_by("-created_at")
 

@@ -72,6 +72,12 @@
   --glass-border: rgba(255, 255, 255, 0.12);
 }
 
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
 *,
 *::before,
 *::after {
@@ -84,6 +90,16 @@ body {
   background-color: var(--app-bg);
   color: var(--text-color);
   transition: background-color 0.25s ease, color 0.25s ease;
+}
+
+.app-shell {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.app-content {
+  flex: 1;
 }
 
 a {
@@ -309,8 +325,14 @@ textarea {
 }
 
 .status-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  white-space: nowrap;
   border-radius: 999px;
-  padding: 0.25rem 0.85rem;
+  min-height: 32px;
+  padding: 0.25rem 0.75rem;
   font-size: 0.85rem;
   background: var(--pill-bg);
   color: var(--pill-text);

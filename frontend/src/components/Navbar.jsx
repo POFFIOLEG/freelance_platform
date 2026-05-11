@@ -75,14 +75,14 @@ const Navbar = () => {
             next.push({
               title: "Проверка результата",
               detail: `Ожидают проверки: ${submitted}`,
-              route: "/dashboard",
+              route: "/profile?tab=jobs",
             });
           }
           if (newApplications > 0) {
             next.push({
               title: "Отклики",
               detail: `Новых откликов: ${newApplications}`,
-              route: "/dashboard",
+              route: "/profile?tab=jobs",
             });
           }
         } else {
@@ -92,7 +92,7 @@ const Navbar = () => {
             next.push({
               title: "Назначенные задачи",
               detail: `Всего: ${assigned}`,
-              route: "/dashboard",
+              route: "/profile?tab=jobs",
             });
           }
           if (waiting > 0) {
@@ -177,12 +177,6 @@ const Navbar = () => {
           <Link to="/about" onClick={close} className={styles.navLink}>
             О нас
           </Link>
-          <Link to="/contests" onClick={close} className={styles.navLink}>
-            Розыгрыши
-          </Link>
-          <Link to="/exchange" onClick={close} className={styles.navLink}>
-            Биржа
-          </Link>
           {user ? (
             <div className={styles.navAuth}>
               <div className={styles.dropdownWrap} ref={notificationsDropdownRef}>
@@ -206,7 +200,7 @@ const Navbar = () => {
                         key={`${item.title}-${index}`}
                         className={styles.notificationItem}
                         onClick={() => {
-                          navigate(item.route || "/dashboard");
+                          navigate(item.route || "/profile?tab=jobs");
                           close();
                         }}
                         type="button"
@@ -233,29 +227,9 @@ const Navbar = () => {
                 </button>
                 {profileOpen && (
                   <div className={styles.dropdownMenu}>
-                    <Link to="/dashboard" onClick={close} className={styles.dropdownLink}>
-                      Кабинет
+                    <Link to="/profile" onClick={close} className={styles.dropdownLink}>
+                      Профиль
                     </Link>
-                    <button
-                      className={styles.dropdownButton}
-                      onClick={() => {
-                        navigate("/dashboard?view=jobs");
-                        close();
-                      }}
-                      type="button"
-                    >
-                      Мои задания
-                    </button>
-                    <button
-                      className={styles.dropdownButton}
-                      onClick={() => {
-                        navigate("/dashboard?view=applications");
-                        close();
-                      }}
-                      type="button"
-                    >
-                      Отклики
-                    </button>
                     <label className={styles.dropdownField}>
                       <span>Роль</span>
                       <select value={user.role} onChange={handleRoleSwitch} className={styles.roleSelect}>

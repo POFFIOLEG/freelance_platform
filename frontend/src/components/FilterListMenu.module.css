@@ -1,0 +1,74 @@
+/* Тёмная панель списка с синей подсветкой выбранного пункта (как в макете) */
+.menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  border-radius: 10px;
+  background: #2d2d2d;
+  z-index: 30;
+  max-height: min(420px, 58vh);
+  overflow-y: auto;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.menu::-webkit-scrollbar {
+  width: 8px;
+}
+
+.menu::-webkit-scrollbar-track {
+  background: #e8e8e8;
+  border-radius: 4px;
+}
+
+.menu::-webkit-scrollbar-thumb {
+  background: #6b6b6b;
+  border-radius: 4px;
+}
+
+.menuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: #ffffff;
+  padding: 0.55rem 0.85rem;
+  font-size: 0.92rem;
+  cursor: pointer;
+  font-family: inherit;
+  line-height: 1.35;
+}
+
+.menuItem:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.menuItemSelected {
+  background: #2b7fff;
+  color: #ffffff;
+}
+
+.menuItemSelected:hover {
+  background: #2476e8;
+}
+
+.menuGroup {
+  font-weight: 700;
+  padding: 0.5rem 0.85rem 0.25rem;
+  font-size: 0.92rem;
+  color: #ffffff;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.menuGroup:first-child {
+  border-top: none;
+}
+
+.menuEmpty {
+  padding: 0.65rem 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+  font-size: 0.9rem;
+}

@@ -21,7 +21,7 @@ const handleResponse = async (response) => {
   let payload = null;
   try {
     payload = await response.json();
-  } catch (err) {
+  } catch {
     payload = null;
   }
 
@@ -56,8 +56,17 @@ const apiFetch = async (path, { method = "GET", token, body, headers, ...rest } 
 const serializeQuery = (params = {}) => {
   const search = new URLSearchParams();
   Object.entries(params).forEach(([key, value]) => {
+    if (typeof value === "boolean" && value === false) {
+      return;
+    }
+    if (Array.isArray(value)) {
+      if (value.length > 0) {
+        search.append(key, value.join(","));
+      }
+      return;
+    }
     if (value !== undefined && value !== null && value !== "") {
-      search.append(key, value);
+      search.append(key, typeof value === "boolean" ? "1" : value);
     }
   });
   const query = search.toString();
@@ -93,12 +102,18 @@ export const authApi = {
       token,
     });
   },
+  async deleteAccount(token) {
+    return apiFetch("/api/auth/delete-account/", { method: "DELETE", token });
+  },
 };
 
 export const jobApi = {
   async list(filters = {}, token) {
     const query = serializeQuery(filters);
     return apiFetch(`/api/jobs/${query}`, { method: "GET", token });
+  },
+  async get(jobId, token) {
+    return apiFetch(`/api/jobs/${jobId}/`, { method: "GET", token });
   },
   async create(payload, token) {
     return apiFetch("/api/jobs/", { method: "POST", body: payload, token });

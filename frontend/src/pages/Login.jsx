@@ -16,7 +16,7 @@ const Login = () => {
     setLoading(true);
     try {
       await login(form);
-      navigate("/dashboard");
+      navigate("/profile?tab=jobs");
     } catch (error) {
       setStatus({ type: "error", message: error.message });
     } finally {

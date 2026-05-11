@@ -1,2 +1,202 @@
 .root {
 }
+
+.profileCard {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.profileHeader {
+  display: grid;
+  grid-template-columns: 90px 1fr auto;
+  gap: 1rem;
+  align-items: center;
+}
+
+.avatar {
+  width: 90px;
+  height: 90px;
+  border-radius: 14px;
+  border: 1px solid var(--soft-border);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  background: color-mix(in srgb, var(--surface-bg) 80%, transparent);
+}
+
+.profileMeta h2 {
+  margin: 0;
+}
+
+.profileStats {
+  min-width: 220px;
+}
+
+.profileStats p {
+  margin: 0.25rem 0;
+}
+
+.tabs {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--soft-border);
+}
+
+.tabs button {
+  border: none;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  padding: 0.3rem 0.2rem;
+  cursor: pointer;
+  font-size: 0.98rem;
+}
+
+.activeTab {
+  color: var(--text-color) !important;
+  border-bottom-color: var(--text-color) !important;
+  font-weight: 700;
+}
+
+.actions {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.contentPanel {
+  border-top: 1px solid var(--soft-border);
+  padding-top: 1rem;
+}
+
+.subTabs {
+  display: flex;
+  gap: 1rem;
+  color: var(--text-secondary);
+  margin-bottom: 0.8rem;
+}
+
+.reviewRow {
+  display: flex;
+  justify-content: space-between;
+  border-top: 1px solid var(--soft-border);
+  padding: 0.6rem 0;
+}
+
+.infoGrid p {
+  margin: 0;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.settingsLayout {
+  border-top: 1px solid var(--soft-border);
+  padding-top: 1rem;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: 1rem;
+}
+
+.settingsMenu {
+  border: 1px solid var(--soft-border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.menuItem {
+  width: 100%;
+  border: none;
+  border-bottom: 1px solid var(--soft-border);
+  background: color-mix(in srgb, var(--surface-bg) 88%, transparent);
+  color: var(--text-color);
+  text-align: left;
+  padding: 0.75rem;
+  cursor: pointer;
+}
+
+.menuItemActive {
+  background: color-mix(in srgb, var(--accent-main) 28%, var(--surface-bg));
+}
+
+.settingsForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.settingsForm label {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.jobsHeader {
+  display: flex;
+  gap: 1rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.jobsFilter,
+.jobsFilterActive {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  padding: 0.2rem 0;
+  font-weight: 600;
+}
+
+.jobsFilterActive {
+  color: var(--text-color);
+  text-decoration: underline;
+}
+
+.ownedJobRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-top: 1px solid var(--soft-border);
+  padding: 0.7rem 0;
+}
+
+.favoriteItem {
+  border: 1px solid var(--soft-border);
+  border-radius: 10px;
+  padding: 0.7rem;
+}
+
+.toggleRow {
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.dangerButton {
+  border: 1px solid color-mix(in srgb, red 55%, var(--soft-border));
+  background: color-mix(in srgb, red 14%, var(--surface-bg));
+  color: var(--text-color);
+  border-radius: 10px;
+  padding: 0.7rem 0.9rem;
+  cursor: pointer;
+}
+
+.dangerButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.confirmInput {
+  border: 1px solid color-mix(in srgb, red 35%, var(--soft-border));
+}
+
+@media (max-width: 1000px) {
+  .settingsLayout {
+    grid-template-columns: 1fr;
+  }
+}

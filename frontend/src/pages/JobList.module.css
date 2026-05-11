@@ -1,2 +1,124 @@
 .root {
 }
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: 1rem;
+  align-items: start;
+}
+
+.listColumn {
+  min-width: 0;
+}
+
+.filterColumn {
+  position: sticky;
+  top: 88px;
+}
+
+.pageTitle {
+  margin-top: 0;
+}
+
+.typeTabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.activeTab {
+  border-color: var(--accent-main);
+  background: color-mix(in srgb, var(--accent-main) 18%, transparent);
+}
+
+.filterForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.budgetRow {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.5rem;
+}
+
+.budgetRow input {
+  width: 100%;
+  min-width: 0;
+}
+
+.jobsList {
+  margin-top: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.8rem;
+}
+
+.jobRow {
+  border: 1px solid var(--soft-border);
+  border-radius: 14px;
+  padding: 0.9rem;
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+}
+
+.jobMain h4 {
+  margin: 0;
+}
+
+.jobSnippet {
+  margin: 0.3rem 0;
+  color: var(--text-secondary);
+}
+
+.jobMeta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  font-size: 0.92rem;
+}
+
+.jobActions {
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  align-items: flex-end;
+}
+
+.favoriteButton {
+  width: 100%;
+}
+
+.fieldLabel {
+  font-weight: 700;
+  margin-top: 0.4rem;
+}
+
+.checkboxRow {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+@media (max-width: 1100px) {
+  .layout {
+    grid-template-columns: 1fr;
+  }
+
+  .filterColumn {
+    position: static;
+  }
+
+  .jobRow {
+    flex-direction: column;
+  }
+
+  .jobActions {
+    align-items: flex-start;
+  }
+}

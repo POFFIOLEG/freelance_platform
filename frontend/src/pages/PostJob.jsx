@@ -2,6 +2,8 @@ import { useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
 import { jobApi } from "../api/client.js";
 import styles from "./PostJob.module.css";
+import { COUNTRIES, getCitiesByCountry } from "../constants/geo.js";
+import { CATEGORIES } from "../constants/categories.js";
 
 const SKILLS_SUGGESTIONS = [
   "React",
@@ -27,12 +29,16 @@ const initialState = {
   title: "",
   description: "",
   category: "",
+  subcategory: "",
+  country: "Россия",
+  city: "",
   location: "",
   budget_min: "",
   budget_max: "",
   deadline: "",
   skills_required: "",
   attachments: "",
+  is_urgent: false,
   is_contest: false,
   is_exchange: false,
 };
@@ -40,6 +46,7 @@ const initialState = {
 const PostJob = () => {
   const { user, token } = useAuth();
   const [form, setForm] = useState(initialState);
+  const [selectedType, setSelectedType] = useState("");
   const [status, setStatus] = useState({ type: null, message: "" });
   const [loading, setLoading] = useState(false);
 
@@ -66,7 +73,24 @@ const PostJob = () => {
   }
 
   const setField = (field, value) => {
-    setForm((prev) => ({ ...prev, [field]: value }));
+    setForm((prev) => {
+      if (field === "category") {
+        return { ...prev, category: value, subcategory: "" };
+      }
+      if (field === "country") {
+        return { ...prev, country: value, city: "" };
+      }
+      return { ...prev, [field]: value };
+    });
+  };
+
+  const selectType = (type) => {
+    setSelectedType(type);
+    setForm((prev) => ({
+      ...prev,
+      is_exchange: type === "exchange",
+      is_contest: type === "contest",
+    }));
   };
 
   const handleSubmit = async (event) => {
@@ -95,11 +119,50 @@ const PostJob = () => {
     }
   };
 
+  const countryCities = getCitiesByCountry(form.country);
+
   return (
     <div className={`page ${styles.root}`}>
       <div className="card post-job-card">
-        <h2>Опубликовать задание</h2>
-        <p className="muted-text">Опишите задачу, бюджет и ожидаемый результат.</p>
+        {!selectedType ? (
+          <>
+            <h2>Выберите тип задачи</h2>
+            <div className={styles.typeGrid}>
+              <button className={styles.typeCard} type="button" onClick={() => selectType("order")}>
+                <h3>Заказ</h3>
+                <p>Разовая задача или краткосрочный проект</p>
+                <span className="primary-button">Опубликовать заказ</span>
+              </button>
+              <button className={styles.typeCard} type="button" onClick={() => selectType("exchange")}>
+                <h3>Биржа</h3>
+                <p>Исполнители размещают ставки, вы выбираете лучшее предложение</p>
+                <span className="primary-button">Разместить на бирже</span>
+              </button>
+              <button className={styles.typeCard} type="button" onClick={() => selectType("contest")}>
+                <h3>Розыгрыш</h3>
+                <p>Случайный выбор исполнителя из откликнувшихся кандидатов</p>
+                <span className="primary-button">Создать розыгрыш</span>
+              </button>
+            </div>
+          </>
+        ) : (
+          <>
+            <h2>Опубликовать задание</h2>
+            <p className="muted-text">Опишите задачу, бюджет и ожидаемый результат.</p>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => {
+                setSelectedType("");
+                setForm(initialState);
+              }}
+            >
+              Назад к выбору типа
+            </button>
+          </>
+        )}
+
+        {selectedType && (
         <form className="form-grid" onSubmit={handleSubmit}>
           <div className="input-group">
             <label>Название</label>
@@ -121,25 +184,55 @@ const PostJob = () => {
           <div className="input-row">
             <div className="input-group">
               <label>Категория</label>
-              <input
+              <select
                 value={form.category}
                 onChange={(event) => setField("category", event.target.value)}
-                placeholder="Дизайн, Разработка..."
-              />
+              >
+                <option value="">Выберите категорию</option>
+                {Object.keys(CATEGORIES).map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
             </div>
             <div className="input-group">
-              <label>Локация</label>
-              <input
-                value={form.location}
-                onChange={(event) => setField("location", event.target.value)}
-                placeholder="Москва / удаленно"
-                list="location-suggestions"
-              />
-              <datalist id="location-suggestions">
-                {LOCATION_SUGGESTIONS.map((item) => (
-                  <option key={item} value={item} />
+              <label>Подкатегория</label>
+              <select
+                value={form.subcategory}
+                onChange={(event) => setField("subcategory", event.target.value)}
+                disabled={!form.category}
+              >
+                <option value="">Выберите подкатегорию</option>
+                {(CATEGORIES[form.category] || []).map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
                 ))}
-              </datalist>
+              </select>
+            </div>
+          </div>
+          <div className="input-row">
+            <div className="input-group">
+              <label>Страна</label>
+              <select value={form.country} onChange={(event) => setField("country", event.target.value)}>
+                {COUNTRIES.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="input-group">
+              <label>Город</label>
+              <select value={form.city} onChange={(event) => setField("city", event.target.value)}>
+                <option value="">Выберите город</option>
+                {countryCities.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
             </div>
           </div>
           <div className="input-row">
@@ -196,20 +289,26 @@ const PostJob = () => {
           </div>
           <div className="input-row">
             <label className="input-group">
-              <span>Розыгрыш исполнителя</span>
+              <span>Только срочный заказ</span>
               <input
                 type="checkbox"
-                checked={form.is_contest}
-                onChange={(event) => setField("is_contest", event.target.checked)}
+                checked={form.is_urgent}
+                onChange={(event) => setField("is_urgent", event.target.checked)}
               />
             </label>
             <label className="input-group">
-              <span>Торги (биржа)</span>
+              <span>Локация (текстом)</span>
               <input
-                type="checkbox"
-                checked={form.is_exchange}
-                onChange={(event) => setField("is_exchange", event.target.checked)}
+                value={form.location}
+                onChange={(event) => setField("location", event.target.value)}
+                placeholder="Москва / удаленно"
+                list="location-suggestions"
               />
+              <datalist id="location-suggestions">
+                {LOCATION_SUGGESTIONS.map((item) => (
+                  <option key={item} value={item} />
+                ))}
+              </datalist>
             </label>
           </div>
           {status.message && (
@@ -219,6 +318,7 @@ const PostJob = () => {
             {loading ? "Публикуем..." : "Опубликовать"}
           </button>
         </form>
+        )}
       </div>
     </div>
   );

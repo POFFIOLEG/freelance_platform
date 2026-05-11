@@ -65,3 +65,13 @@ class SwitchRoleView(APIView):
         request.user.save(update_fields=["role"])
         return Response({"user": UserSerializer(request.user).data})
 
+
+class DeleteAccountView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def delete(self, request):
+        user = request.user
+        Token.objects.filter(user=user).delete()
+        user.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
