@@ -6,6 +6,8 @@ import { useAuth } from "../context/AuthContext.jsx";
 import { CATEGORY_BY_ID, CATEGORY_TREE, SUBCATEGORY_BY_ID } from "../constants/categoriesTree.js";
 import CategoryTreeFilter from "../components/CategoryTreeFilter.jsx";
 import CountryCityListFilter from "../components/CountryCityListFilter.jsx";
+import { broadcastFavoritesChanged } from "../constants/favoritesSync.js";
+import { getJobCardStatus } from "../utils/jobStatusUi.js";
 
 const initialFilters = {
   q: "",
@@ -23,7 +25,7 @@ const initialFilters = {
 const JobList = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, token } = useAuth();
   const [filters, setFilters] = useState({ ...initialFilters });
   const [appliedFilters, setAppliedFilters] = useState({ ...initialFilters });
   const [jobs, setJobs] = useState([]);
@@ -58,7 +60,7 @@ const JobList = () => {
       if (toNum === "" || Number.isNaN(Number(toNum)) || Number(toNum) < 0) {
         delete payload.budget_to;
       }
-      const data = await jobApi.list(payload);
+      const data = await jobApi.list(payload, token);
       setJobs(data);
     } catch (error) {
       setStatus({ type: "error", message: error.message });
@@ -69,7 +71,7 @@ const JobList = () => {
 
   useEffect(() => {
     fetchJobs();
-  }, [appliedFilters]);
+  }, [appliedFilters, token]);
 
   useEffect(() => {
     try {
@@ -129,6 +131,7 @@ const JobList = () => {
       : [...favorites, jobId];
     setFavorites(next);
     localStorage.setItem(favoritesKey, JSON.stringify(next));
+    broadcastFavoritesChanged(favoritesKey);
   };
 
   return (
@@ -171,37 +174,65 @@ const JobList = () => {
           {loading && <p>Загружаем...</p>}
           {!loading && jobs.length === 0 && <p className="muted-text">Заданий не найдено.</p>}
           <div className={styles.jobsList}>
-            {jobs.map((job) => (
-              <article key={job.id} className={styles.jobRow}>
-                <div className={styles.jobMain}>
-                  <h4>{job.title}</h4>
-                  <p className="muted-text">{job.category || "Без категории"}</p>
-                  <p className={styles.jobSnippet}>{job.description}</p>
-                  <div className={styles.jobMeta}>
-                    <span><strong>Бюджет:</strong> {Number(job.budget_min || 0).toLocaleString("ru-RU")} - {Number(job.budget_max || 0).toLocaleString("ru-RU")} ₽</span>
-                    <span><strong>Локация:</strong> {job.city || job.location || "Любая"}</span>
-                    <span><strong>Отклики:</strong> {job.applications_count || 0}</span>
+            {jobs.map((job) => {
+              const cardStatus = getJobCardStatus(job.status);
+              const workerResponded =
+                user?.role === "worker" && Boolean(job.my_application_status);
+              const workerApplicationsClosed =
+                user?.role === "worker" &&
+                (job.status !== "open" || Boolean(job.assigned_to));
+              const primaryCta = job.is_exchange
+                ? "Сделать ставку"
+                : job.is_contest
+                  ? "Принять участие"
+                  : "Откликнуться";
+              const primaryLabel = workerApplicationsClosed
+                ? job.assigned_to
+                  ? "Исполнитель выбран"
+                  : "Набор закрыт"
+                : workerResponded
+                  ? "Откликнулись"
+                  : primaryCta;
+              return (
+                <article key={job.id} className={styles.jobRow}>
+                  <div className={styles.jobMain}>
+                    <h4>{job.title}</h4>
+                    <p className="muted-text">{job.category || "Без категории"}</p>
+                    <p className={styles.jobSnippet}>{job.description}</p>
+                    <div className={styles.jobMeta}>
+                      <span><strong>Бюджет:</strong> {Number(job.budget_min || 0).toLocaleString("ru-RU")} - {Number(job.budget_max || 0).toLocaleString("ru-RU")} ₽</span>
+                      <span><strong>Локация:</strong> {job.city || job.location || "Любая"}</span>
+                      <span><strong>Отклики:</strong> {job.applications_count || 0}</span>
+                    </div>
                   </div>
-                </div>
-                <div className={styles.jobActions}>
-                  <span className={`status-pill status-${job.status}`}>{job.status}</span>
-                  <button
-                    className={`secondary-button ${styles.favoriteButton}`}
-                    type="button"
-                    onClick={() => toggleFavorite(job.id)}
-                  >
-                    {favorites.includes(job.id) ? "В избранном" : "В избранное"}
-                  </button>
-                  <button
-                    className="primary-button"
-                    type="button"
-                    onClick={() => navigate(`/jobs/${job.id}`)}
-                  >
-                    {job.is_exchange ? "Сделать ставку" : job.is_contest ? "Принять участие" : "Откликнуться"}
-                  </button>
-                </div>
-              </article>
-            ))}
+                  <div className={styles.jobActions}>
+                    <span
+                      className={`status-pill ${styles.statusPill} ${styles[`statusGroup_${cardStatus.group}`]}`}
+                    >
+                      {cardStatus.label}
+                    </span>
+                    <button
+                      className={`secondary-button ${styles.actionButton}`}
+                      type="button"
+                      onClick={() => toggleFavorite(job.id)}
+                    >
+                      {favorites.includes(job.id) ? "В избранном" : "В избранное"}
+                    </button>
+                    <button
+                      className={`${workerApplicationsClosed ? "secondary-button" : "primary-button"} ${
+                        styles.actionButton
+                      } ${workerResponded && !workerApplicationsClosed ? styles.actionButtonApplied : ""} ${
+                        workerApplicationsClosed ? styles.actionButtonClosed : ""
+                      }`}
+                      type="button"
+                      onClick={() => navigate(`/jobs/${job.id}`)}
+                    >
+                      {primaryLabel}
+                    </button>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         </section>
 

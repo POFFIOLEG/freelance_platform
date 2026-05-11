@@ -1,5 +1,7 @@
 from django.shortcuts import get_object_or_404
-from django.db.models import Q
+from django.db import IntegrityError
+from django.db.models import Q, Prefetch
+from django.utils import timezone
 from decimal import Decimal
 import random
 from rest_framework import viewsets, status
@@ -18,10 +20,36 @@ from .serializers import (
 from .permissions import IsEmployer, IsWorker, IsJobOwner
 
 
+def _response_if_job_not_accepting_applications(job):
+    """Отклики и новые ставки (биржа) только пока задание открыто и исполнитель не назначен."""
+    if job.assigned_to_id is not None:
+        return Response(
+            {
+                "detail": "Исполнитель уже выбран. Новые отклики и ставки по этому заданию не принимаются.",
+            },
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    if job.status != Job.Status.OPEN:
+        return Response(
+            {"detail": "По этому заданию больше нельзя откликнуться."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+    return None
+
+
 class JobViewSet(viewsets.ModelViewSet):
     queryset = Job.objects.all().select_related("employer", "assigned_to")
     serializer_class = JobSerializer
     permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def retrieve(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance.status == Job.Status.COMPLETED:
+            from reviews.publication import sync_job_review_publication
+
+            sync_job_review_publication(instance)
+        serializer = self.get_serializer(instance)
+        return Response(serializer.data)
 
     def get_permissions(self):
         if self.action in ["create"]:
@@ -114,6 +142,19 @@ class JobViewSet(viewsets.ModelViewSet):
             qs = qs.filter(is_contest=True)
         elif job_type == "exchange":
             qs = qs.filter(is_exchange=True)
+        user = request.user
+        if user.is_authenticated and getattr(user, "role", None) == "worker":
+            qs = qs.prefetch_related(
+                Prefetch(
+                    "applications",
+                    queryset=JobApplication.objects.filter(worker=user).only(
+                        "id",
+                        "job_id",
+                        "status",
+                    ),
+                    to_attr="_my_worker_application",
+                )
+            )
         return qs.order_by("-created_at")
 
     def perform_create(self, serializer):
@@ -122,17 +163,26 @@ class JobViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=["post"])
     def apply(self, request, pk=None):
         job = self.get_object()
+        blocked = _response_if_job_not_accepting_applications(job)
+        if blocked is not None:
+            return blocked
         serializer = JobApplicationSerializer(
             data=request.data,
             context={"request": request},
         )
         serializer.is_valid(raise_exception=True)
-        JobApplication.objects.create(
-            job=job,
-            worker=request.user,
-            cover_letter=serializer.validated_data.get("cover_letter", ""),
-            expected_budget=serializer.validated_data.get("expected_budget", 0),
-        )
+        try:
+            JobApplication.objects.create(
+                job=job,
+                worker=request.user,
+                cover_letter=serializer.validated_data.get("cover_letter", ""),
+                expected_budget=serializer.validated_data.get("expected_budget", 0),
+            )
+        except IntegrityError:
+            return Response(
+                {"detail": "Вы уже откликались на это задание"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         return Response({"detail": "Отклик отправлен"}, status=status.HTTP_201_CREATED)
 
     @action(detail=True, methods=["get", "post"])
@@ -145,6 +195,9 @@ class JobViewSet(viewsets.ModelViewSet):
                 return Response(status=status.HTTP_403_FORBIDDEN)
             serializer = JobBidSerializer(job.bids.select_related("worker"), many=True)
             return Response(serializer.data)
+        blocked = _response_if_job_not_accepting_applications(job)
+        if blocked is not None:
+            return blocked
         serializer = JobBidSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         bid, _ = JobBid.objects.update_or_create(
@@ -251,7 +304,8 @@ class JobViewSet(viewsets.ModelViewSet):
         submission.status = WorkSubmission.Status.APPROVED
         submission.save(update_fields=["status"])
         job.status = Job.Status.COMPLETED
-        job.save(update_fields=["status"])
+        job.completed_at = timezone.now()
+        job.save(update_fields=["status", "completed_at"])
         transfer_amount = job.budget_max or job.budget_min or Decimal("0")
         if transfer_amount and job.assigned_to:
             employer_profile = job.employer.profile
@@ -311,10 +365,41 @@ class JobViewSet(viewsets.ModelViewSet):
 
     @action(detail=False, methods=["get"], permission_classes=[IsAuthenticated])
     def dashboard(self, request):
-        jobs_owned = JobSerializer(request.user.jobs.all(), many=True).data
-        jobs_assigned = JobSerializer(
-            request.user.assigned_jobs.all(),
+        job_qs = Job.objects.select_related(
+            "employer",
+            "employer__profile",
+            "assigned_to",
+            "assigned_to__profile",
+        ).prefetch_related("applications", "submissions")
+        jobs_owned = JobSerializer(
+            job_qs.filter(employer=request.user),
             many=True,
         ).data
-        return Response({"owned": jobs_owned, "assigned": jobs_assigned})
+        jobs_assigned = JobSerializer(
+            job_qs.filter(assigned_to=request.user),
+            many=True,
+        ).data
+        applied_jobs = []
+        for app in (
+            JobApplication.objects.filter(worker=request.user)
+            .select_related(
+                "job",
+                "job__employer",
+                "job__employer__profile",
+                "job__assigned_to",
+                "job__assigned_to__profile",
+            )
+            .prefetch_related("job__applications", "job__submissions")
+            .order_by("-created_at")
+        ):
+            payload = JobSerializer(app.job).data
+            payload["my_application_status"] = app.status
+            applied_jobs.append(payload)
+        return Response(
+            {
+                "owned": jobs_owned,
+                "assigned": jobs_assigned,
+                "applied": applied_jobs,
+            }
+        )
 

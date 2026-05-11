@@ -1,10 +1,14 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 import { authApi, jobApi, reviewApi } from "../api/client.js";
+import { FAVORITES_STORAGE_EVENT, broadcastFavoritesChanged } from "../constants/favoritesSync.js";
+import { getJobCardStatus, getApplicationStatusLabel } from "../utils/jobStatusUi.js";
 import styles from "./Profile.module.css";
 
 const defaultProfile = {
+  first_name: "",
+  last_name: "",
   headline: "",
   bio: "",
   skills: "",
@@ -22,6 +26,7 @@ const Profile = () => {
   const [form, setForm] = useState(defaultProfile);
   const [reviews, setReviews] = useState([]);
   const [ownedJobs, setOwnedJobs] = useState([]);
+  const [appliedJobs, setAppliedJobs] = useState([]);
   const [favoriteJobs, setFavoriteJobs] = useState([]);
   const [status, setStatus] = useState({ type: null, message: "" });
   const [loading, setLoading] = useState(false);
@@ -32,6 +37,8 @@ const Profile = () => {
     push_notifications: true,
     chat_notifications: true,
   });
+  const [reputation, setReputation] = useState(null);
+  const [passwordFields, setPasswordFields] = useState({ password: "", password_confirm: "" });
   const activeTab = params.get("tab") || "jobs";
   const settingsView = params.get("settings") || "main";
   const favoritesKey = `favorite_jobs_${user?.id || "guest"}`;
@@ -42,6 +49,8 @@ const Profile = () => {
       setForm({
         ...defaultProfile,
         ...user.profile,
+        first_name: user.first_name || "",
+        last_name: user.last_name || "",
         skills: Array.isArray(user.profile.skills) ? user.profile.skills.join(", ") : user.profile.skills || "",
       });
     } else if (token) {
@@ -50,6 +59,8 @@ const Profile = () => {
         setForm({
           ...defaultProfile,
           ...profile,
+          first_name: profile.first_name || "",
+          last_name: profile.last_name || "",
           skills: Array.isArray(profile.skills) ? profile.skills.join(", ") : profile.skills || "",
         });
       });
@@ -60,19 +71,47 @@ const Profile = () => {
     if (!token) return;
     jobApi
       .dashboard(token)
-      .then((data) => setOwnedJobs(data.owned || []))
+      .then((data) => {
+        setOwnedJobs(data.owned || []);
+        setAppliedJobs(data.applied || []);
+      })
       .catch(() => {});
   }, [token]);
 
-  useEffect(() => {
+  const loadFavoriteJobs = useCallback(async () => {
     try {
-      const saved = JSON.parse(localStorage.getItem(favoritesKey) || "[]");
+      const raw = localStorage.getItem(favoritesKey);
+      const saved = raw ? JSON.parse(raw) : [];
       const ids = Array.isArray(saved) ? saved : [];
-      setFavoriteJobs(ownedJobs.filter((job) => ids.includes(job.id)));
+      if (ids.length === 0) {
+        setFavoriteJobs([]);
+        return;
+      }
+      const results = await Promise.all(ids.map((id) => jobApi.get(id, token).catch(() => null)));
+      const byId = new Map(results.filter(Boolean).map((job) => [job.id, job]));
+      setFavoriteJobs(ids.map((id) => byId.get(id)).filter(Boolean));
     } catch {
       setFavoriteJobs([]);
     }
-  }, [favoritesKey, ownedJobs]);
+  }, [favoritesKey, token]);
+
+  useEffect(() => {
+    loadFavoriteJobs();
+    const onStorage = (e) => {
+      if (e.key !== favoritesKey) return;
+      loadFavoriteJobs();
+    };
+    const onCustom = (e) => {
+      if (e.detail?.key != null && e.detail.key !== favoritesKey) return;
+      loadFavoriteJobs();
+    };
+    window.addEventListener("storage", onStorage);
+    window.addEventListener(FAVORITES_STORAGE_EVENT, onCustom);
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener(FAVORITES_STORAGE_EVENT, onCustom);
+    };
+  }, [favoritesKey, loadFavoriteJobs]);
 
   useEffect(() => {
     try {
@@ -88,10 +127,21 @@ const Profile = () => {
   useEffect(() => {
     if (!user) return;
     reviewApi
-      .list({ user: user.id })
-      .then((items) => setReviews(items))
-      .catch(() => {});
-  }, [user]);
+      .list({ user: user.id }, token)
+      .then((items) => setReviews(Array.isArray(items) ? items : []))
+      .catch(() => setReviews([]));
+  }, [user, token]);
+
+  useEffect(() => {
+    if (!user?.id) {
+      setReputation(null);
+      return;
+    }
+    reviewApi
+      .summary(user.id, token)
+      .then(setReputation)
+      .catch(() => setReputation(null));
+  }, [user?.id, token]);
 
   const reviewsMeta = useMemo(() => {
     const positive = reviews.filter((item) => Number(item.rating) >= 4).length;
@@ -107,6 +157,8 @@ const Profile = () => {
     try {
       await updateProfile({
         ...form,
+        first_name: form.first_name,
+        last_name: form.last_name,
         skills: form.skills
           .split(",")
           .map((skill) => skill.trim())
@@ -115,6 +167,31 @@ const Profile = () => {
         hourly_rate: form.hourly_rate ? Number(form.hourly_rate) : null,
       });
       setStatus({ type: "success", message: "Настройки обновлены" });
+    } catch (error) {
+      setStatus({ type: "error", message: error.message });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const saveMainSettings = async (event) => {
+    event.preventDefault();
+    if (!token) return;
+    setLoading(true);
+    setStatus({ type: null, message: "" });
+    try {
+      const payload = {
+        first_name: form.first_name,
+        last_name: form.last_name,
+        headline: form.headline,
+      };
+      if (passwordFields.password.trim()) {
+        payload.password = passwordFields.password;
+        payload.password_confirm = passwordFields.password_confirm;
+      }
+      await updateProfile(payload);
+      setPasswordFields({ password: "", password_confirm: "" });
+      setStatus({ type: "success", message: "Основные настройки сохранены" });
     } catch (error) {
       setStatus({ type: "error", message: error.message });
     } finally {
@@ -143,6 +220,7 @@ const Profile = () => {
       await authApi.deleteAccount(token);
       localStorage.removeItem(favoritesKey);
       localStorage.removeItem(notificationKey);
+      broadcastFavoritesChanged(favoritesKey);
       logout();
     } catch (error) {
       setStatus({ type: "error", message: error.message });
@@ -151,7 +229,17 @@ const Profile = () => {
     }
   };
 
-  const visibleJobs = ownedJobs.filter((job) => {
+  const isEmployer = user.role === "employer";
+  const jobsSource = isEmployer ? ownedJobs : appliedJobs;
+
+  const openJobsCount = jobsSource.filter(
+    (job) => job.status === "open" || job.status === "in_progress" || job.status === "submitted",
+  ).length;
+  const closedJobsCount = jobsSource.filter(
+    (job) => job.status === "completed" || job.status === "cancelled",
+  ).length;
+
+  const visibleJobs = jobsSource.filter((job) => {
     if (jobsView === "open") {
       return job.status === "open" || job.status === "in_progress" || job.status === "submitted";
     }
@@ -170,12 +258,34 @@ const Profile = () => {
             <span>Положительные {reviewsMeta.positive}</span>
             <span>Отрицательные {reviewsMeta.negative}</span>
           </div>
-          <h3>Отзывы от фрилансеров за всё время</h3>
+          <p className={styles.reputationHint}>
+            {reputation?.weighting_note ||
+              "Итоговый рейтинг в шапке профиля — взвешенный: учитываются свежесть отзыва, масштаб сделки и надёжность автора отзыва."}
+            {reputation?.simple_average != null && reputation?.review_count > 0 && (
+              <>
+                {" "}
+                Среднее по звёздам (без сглаживания): {reputation.simple_average} / 5.
+              </>
+            )}
+            {reputation?.public_confidence === "low" && reputation?.review_count > 0 && (
+              <> Мало данных — публичная оценка ближе к среднему по платформе.</>
+            )}
+          </p>
+          <h3>Отзывы о вас</h3>
           {reviews.length === 0 && <p className="muted-text">Пока отзывов нет.</p>}
           {reviews.map((item) => (
-            <article key={item.id} className={styles.reviewRow}>
-              <strong>{item.job?.title || "Задание"}</strong>
-              <span>Оценка: {item.rating}/5</span>
+            <article key={item.id} className={styles.reviewCard}>
+              <div className={styles.reviewCardTop}>
+                <strong>{item.job?.title || "Задание"}</strong>
+                <span className={styles.reviewStars}>{item.rating}/5</span>
+              </div>
+              <p className={styles.reviewAuthor}>
+                От {item.reviewer?.username || "—"}
+                {item.created_at
+                  ? ` · ${new Date(item.created_at).toLocaleDateString("ru-RU")}`
+                  : ""}
+              </p>
+              {item.comment ? <p className={styles.reviewComment}>{item.comment}</p> : null}
             </article>
           ))}
         </section>
@@ -190,7 +300,9 @@ const Profile = () => {
             <p><strong>Логин:</strong> {user.username}</p>
             <p><strong>Email:</strong> {user.email || "-"}</p>
             <p><strong>Роль:</strong> {user.role === "employer" ? "Заказчик" : "Исполнитель"}</p>
-            <p><strong>Имя / Заголовок:</strong> {form.headline || "-"}</p>
+            <p><strong>Имя:</strong> {user.first_name || "-"}</p>
+            <p><strong>Фамилия:</strong> {user.last_name || "-"}</p>
+            <p><strong>Заголовок профиля:</strong> {form.headline || "-"}</p>
             <p><strong>Компания:</strong> {form.company || "-"}</p>
             <p><strong>Локация:</strong> {form.location || "-"}</p>
             <p><strong>Доступность:</strong> {form.availability || "-"}</p>
@@ -242,35 +354,130 @@ const Profile = () => {
             </button>
           </aside>
           {settingsView === "main" && (
-            <form className={styles.settingsForm} onSubmit={saveSettings}>
-              <h3>Основные настройки</h3>
-              <label>Имя <input value={form.headline} onChange={(e) => setField("headline", e.target.value)} /></label>
-              <label>Компания/Фамилия <input value={form.company} onChange={(e) => setField("company", e.target.value)} /></label>
-              <label>Email <input value={user.email || ""} readOnly /></label>
-              <label>Заголовок страницы <input value={form.bio} onChange={(e) => setField("bio", e.target.value)} /></label>
-              <label>Пароль <input type="password" value="************" readOnly /></label>
-              {status.message && (
-                <p className={status.type === "error" ? "error-text" : "success-text"}>{status.message}</p>
-              )}
-              <button className="primary-button" disabled={loading}>
-                {loading ? "Сохраняем..." : "Изменить"}
-              </button>
-            </form>
+            <div className={styles.settingsNarrowWrap}>
+              <form className={`${styles.settingsForm} ${styles.settingsFormNarrow}`} onSubmit={saveMainSettings}>
+                <h3>Основные настройки</h3>
+                <label>
+                  Имя
+                  <input
+                    value={form.first_name}
+                    onChange={(e) => setField("first_name", e.target.value)}
+                    autoComplete="given-name"
+                  />
+                </label>
+                <label>
+                  Фамилия
+                  <input
+                    value={form.last_name}
+                    onChange={(e) => setField("last_name", e.target.value)}
+                    autoComplete="family-name"
+                  />
+                </label>
+                <label>
+                  Email
+                  <input value={user.email || ""} readOnly title="Смена email пока недоступна в этой форме" />
+                </label>
+                <label>
+                  Заголовок профиля
+                  <input
+                    value={form.headline}
+                    onChange={(e) => setField("headline", e.target.value)}
+                    placeholder="Например: Full-stack разработчик"
+                  />
+                </label>
+                <p className={styles.settingsFieldHint}>
+                  Это короткая строка под вашим именем на странице профиля: чем вы занимаетесь или чем полезны
+                  заказчикам. Не путайте с именем сайта в браузере — это только текст внутри платформы.
+                </p>
+                <label>
+                  Новый пароль
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    value={passwordFields.password}
+                    onChange={(e) => setPasswordFields((p) => ({ ...p, password: e.target.value }))}
+                    placeholder="Оставьте пустым, если не меняете"
+                  />
+                </label>
+                <label>
+                  Подтверждение пароля
+                  <input
+                    type="password"
+                    autoComplete="new-password"
+                    value={passwordFields.password_confirm}
+                    onChange={(e) => setPasswordFields((p) => ({ ...p, password_confirm: e.target.value }))}
+                    placeholder="Повторите новый пароль"
+                  />
+                </label>
+                {status.message && (
+                  <p className={status.type === "error" ? "error-text" : "success-text"}>{status.message}</p>
+                )}
+                <button className="primary-button" type="submit" disabled={loading}>
+                  {loading ? "Сохраняем..." : "Сохранить"}
+                </button>
+              </form>
+            </div>
           )}
 
           {settingsView === "info" && (
-            <form className={styles.settingsForm} onSubmit={saveSettings}>
-              <h3>Редактирование информации</h3>
-              <label>Локация <input value={form.location} onChange={(e) => setField("location", e.target.value)} /></label>
-              <label>Доступность <input value={form.availability} onChange={(e) => setField("availability", e.target.value)} /></label>
-              <label>Опыт (лет) <input type="number" min={0} value={form.experience_years} onChange={(e) => setField("experience_years", e.target.value)} /></label>
-              <label>Ставка (₽/ч) <input type="number" min={0} value={form.hourly_rate || ""} onChange={(e) => setField("hourly_rate", e.target.value)} /></label>
-              <label>Навыки (через запятую) <input value={form.skills} onChange={(e) => setField("skills", e.target.value)} /></label>
-              <label>Портфолио <input value={form.portfolio_url} onChange={(e) => setField("portfolio_url", e.target.value)} /></label>
-              <button className="primary-button" disabled={loading}>
-                {loading ? "Сохраняем..." : "Сохранить"}
-              </button>
-            </form>
+            <div className={styles.settingsNarrowWrap}>
+              <form className={`${styles.settingsForm} ${styles.settingsFormNarrow}`} onSubmit={saveSettings}>
+                <h3>Редактирование информации</h3>
+                <label>
+                  Локация
+                  <input value={form.location} onChange={(e) => setField("location", e.target.value)} />
+                </label>
+                <label>
+                  Компания
+                  <input
+                    value={form.company}
+                    onChange={(e) => setField("company", e.target.value)}
+                    placeholder="Название компании или ИП"
+                  />
+                </label>
+                <label>
+                  Доступность
+                  <input value={form.availability} onChange={(e) => setField("availability", e.target.value)} />
+                </label>
+                <label>
+                  Опыт (лет)
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.experience_years}
+                    onChange={(e) => setField("experience_years", e.target.value)}
+                  />
+                </label>
+                <label>
+                  Ставка (₽/ч)
+                  <input
+                    type="number"
+                    min={0}
+                    value={form.hourly_rate || ""}
+                    onChange={(e) => setField("hourly_rate", e.target.value)}
+                  />
+                </label>
+                <label>
+                  Навыки (через запятую)
+                  <input value={form.skills} onChange={(e) => setField("skills", e.target.value)} />
+                </label>
+                <label>
+                  Портфолио
+                  <input
+                    value={form.portfolio_url}
+                    onChange={(e) => setField("portfolio_url", e.target.value)}
+                    placeholder="https://..."
+                    inputMode="url"
+                  />
+                </label>
+                {status.message && (
+                  <p className={status.type === "error" ? "error-text" : "success-text"}>{status.message}</p>
+                )}
+                <button className="primary-button" type="submit" disabled={loading}>
+                  {loading ? "Сохраняем..." : "Сохранить"}
+                </button>
+              </form>
+            </div>
           )}
 
           {settingsView === "favorites" && (
@@ -287,36 +494,56 @@ const Profile = () => {
           )}
 
           {settingsView === "notifications" && (
-            <section className={styles.settingsForm}>
-              <h3>Уведомления</h3>
-              <label className={styles.toggleRow}>
-                <input
-                  type="checkbox"
-                  checked={notificationSettings.email_notifications}
-                  onChange={(e) => setNotificationSettings((prev) => ({ ...prev, email_notifications: e.target.checked }))}
-                />
-                Email-уведомления
-              </label>
-              <label className={styles.toggleRow}>
-                <input
-                  type="checkbox"
-                  checked={notificationSettings.push_notifications}
-                  onChange={(e) => setNotificationSettings((prev) => ({ ...prev, push_notifications: e.target.checked }))}
-                />
-                Push-уведомления
-              </label>
-              <label className={styles.toggleRow}>
-                <input
-                  type="checkbox"
-                  checked={notificationSettings.chat_notifications}
-                  onChange={(e) => setNotificationSettings((prev) => ({ ...prev, chat_notifications: e.target.checked }))}
-                />
-                Уведомления чата
-              </label>
-              <button className="primary-button" type="button" onClick={saveNotifications}>
-                Сохранить настройки
-              </button>
-            </section>
+            <div className={styles.settingsNarrowWrap}>
+              <section className={`${styles.settingsForm} ${styles.settingsFormNarrow}`}>
+                <h3>Уведомления</h3>
+                <p className={styles.settingsFieldHint}>
+                  Выберите каналы напоминаний. Настройки хранятся в браузере на этом устройстве.
+                </p>
+                <label className={styles.checkCard}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkInput}
+                    checked={notificationSettings.email_notifications}
+                    onChange={(e) =>
+                      setNotificationSettings((prev) => ({ ...prev, email_notifications: e.target.checked }))
+                    }
+                  />
+                  <span className={styles.checkMark} aria-hidden />
+                  <span className={styles.checkText}>Email-уведомления</span>
+                </label>
+                <label className={styles.checkCard}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkInput}
+                    checked={notificationSettings.push_notifications}
+                    onChange={(e) =>
+                      setNotificationSettings((prev) => ({ ...prev, push_notifications: e.target.checked }))
+                    }
+                  />
+                  <span className={styles.checkMark} aria-hidden />
+                  <span className={styles.checkText}>Push-уведомления</span>
+                </label>
+                <label className={styles.checkCard}>
+                  <input
+                    type="checkbox"
+                    className={styles.checkInput}
+                    checked={notificationSettings.chat_notifications}
+                    onChange={(e) =>
+                      setNotificationSettings((prev) => ({ ...prev, chat_notifications: e.target.checked }))
+                    }
+                  />
+                  <span className={styles.checkMark} aria-hidden />
+                  <span className={styles.checkText}>Уведомления чата</span>
+                </label>
+                {status.message && (
+                  <p className={status.type === "error" ? "error-text" : "success-text"}>{status.message}</p>
+                )}
+                <button className="primary-button" type="button" onClick={saveNotifications}>
+                  Сохранить настройки
+                </button>
+              </section>
+            </div>
           )}
 
           {settingsView === "delete" && (
@@ -349,34 +576,62 @@ const Profile = () => {
       <section className={styles.contentPanel}>
         <div className={styles.jobsHeader}>
           <button type="button" className={jobsView === "all" ? styles.jobsFilterActive : styles.jobsFilter} onClick={() => setJobsView("all")}>
-            Все ({ownedJobs.length})
+            Все ({jobsSource.length})
           </button>
           <button
             type="button"
             className={jobsView === "open" ? styles.jobsFilterActive : styles.jobsFilter}
             onClick={() => setJobsView("open")}
           >
-            Открытые ({ownedJobs.filter((job) => job.status === "open" || job.status === "in_progress" || job.status === "submitted").length})
+            Открытые ({openJobsCount})
           </button>
           <button
             type="button"
             className={jobsView === "closed" ? styles.jobsFilterActive : styles.jobsFilter}
             onClick={() => setJobsView("closed")}
           >
-            Закрытые ({ownedJobs.filter((job) => job.status === "completed" || job.status === "cancelled").length})
+            Закрытые ({closedJobsCount})
           </button>
-          <Link to="/post-job" className="primary-button">Разместить заказ</Link>
+          {isEmployer && (
+            <Link to="/post-job" className="primary-button">Разместить заказ</Link>
+          )}
         </div>
-        {visibleJobs.length === 0 && <p className="muted-text">По выбранному фильтру заданий нет.</p>}
-        {visibleJobs.map((job) => (
-          <article key={job.id} className={styles.ownedJobRow}>
-            <div>
-              <strong>{job.title}</strong>
-              <p className="muted-text">{job.category || "Без категории"}</p>
-            </div>
-            <span className={`status-pill status-${job.status}`}>{job.status}</span>
-          </article>
-        ))}
+        {!isEmployer && (
+          <p className="muted-text" style={{ marginTop: "0.5rem" }}>
+            Задания, на которые вы откликнулись. Откройте карточку, чтобы отправить результат или уточнить детали.
+          </p>
+        )}
+        {visibleJobs.length === 0 && (
+          <p className="muted-text">
+            {isEmployer ? "По выбранному фильтру заданий нет." : "Нет откликов. Найдите задания в разделе «Все задания»."}
+          </p>
+        )}
+        {visibleJobs.map((job) => {
+          const cardStatus = getJobCardStatus(job.status);
+          return (
+            <Link key={job.id} to={`/jobs/${job.id}`} className={styles.jobRowLink}>
+              <article className={styles.ownedJobRow}>
+                <div className={styles.jobRowMain}>
+                  <strong>{job.title}</strong>
+                  <p className="muted-text">{job.category || "Без категории"}</p>
+                  {!isEmployer && job.my_application_status && (
+                    <p className={styles.applicationHint}>
+                      {getApplicationStatusLabel(job.my_application_status)}
+                    </p>
+                  )}
+                  {isEmployer && typeof job.applications_count === "number" && (
+                    <p className="muted-text">Откликов: {job.applications_count}</p>
+                  )}
+                </div>
+                <span
+                  className={`status-pill ${styles.profileStatusPill} ${styles[`profileStatus_${cardStatus.group}`]}`}
+                >
+                  {cardStatus.label}
+                </span>
+              </article>
+            </Link>
+          );
+        })}
       </section>
     );
   };
@@ -407,9 +662,18 @@ const Profile = () => {
             </p>
           </div>
           <div className={styles.profileStats}>
-            <p><strong>Рейтинг:</strong> 0</p>
-            <p><strong>Безопасные сделки:</strong> 0</p>
-            <p><strong>Отзывы:</strong> 0</p>
+            <p>
+              <strong>Рейтинг:</strong>{" "}
+              {reputation?.public_rating_display != null
+                ? `${reputation.public_rating_display} ★`
+                : "—"}
+            </p>
+            <p>
+              <strong>Успешные сделки:</strong> {reputation?.completed_deals ?? 0}
+            </p>
+            <p>
+              <strong>Отзывов:</strong> {reputation?.review_count ?? 0}
+            </p>
           </div>
         </div>
 

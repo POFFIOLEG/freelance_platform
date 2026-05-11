@@ -15,7 +15,8 @@ import { useAuth } from "../context/AuthContext.jsx";
 import styles from "./Navbar.module.css";
 import logoLight from "../../img/Logo_white.png";
 import logoDark from "../../img/Logo_black.png";
-import { jobApi } from "../api/client.js";
+import { dismissNotification, pollPlatformNotifications } from "../utils/platformNotifications.js";
+import { playNotificationSound, unlockNotificationAudio } from "../utils/notificationSound.js";
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -40,9 +41,46 @@ const Navbar = () => {
     localStorage.setItem("theme", theme);
   }, [theme]);
 
+  useEffect(() => {
+    const once = () => {
+      unlockNotificationAudio();
+      document.removeEventListener("pointerdown", once);
+    };
+    document.addEventListener("pointerdown", once, { passive: true });
+    return () => document.removeEventListener("pointerdown", once);
+  }, []);
+
   const toggleTheme = () => {
     setTheme((currentTheme) => (currentTheme === "dark" ? "light" : "dark"));
   };
+
+  const themeSwitch = (
+    <button
+      type="button"
+      className={styles.themeSwitch}
+      onClick={toggleTheme}
+      role="switch"
+      aria-checked={isDark}
+      aria-label={isDark ? "Переключить на светлую тему" : "Переключить на тёмную тему"}
+    >
+      <span className={styles.themeSwitchInner}>
+        <span className={styles.themeSwitchIcon} aria-hidden>
+          <FaSun />
+        </span>
+        <span
+          className={`${styles.themeSwitchTrack} ${isDark ? styles.themeSwitchTrackOn : ""}`}
+          aria-hidden
+        >
+          <span
+            className={`${styles.themeSwitchThumb} ${isDark ? styles.themeSwitchThumbOn : ""}`}
+          />
+        </span>
+        <span className={styles.themeSwitchIcon} aria-hidden>
+          <FaMoon />
+        </span>
+      </span>
+    </button>
+  );
 
   const handleRoleSwitch = async (event) => {
     const role = event.target.value;
@@ -53,59 +91,39 @@ const Navbar = () => {
     }
   };
 
+  const dashboardErrorLogged = useRef(false);
+  const previousNotifyIdsRef = useRef(null);
+
   useEffect(() => {
     if (!user) {
       setNotifications([]);
+      previousNotifyIdsRef.current = null;
       return;
     }
 
+    previousNotifyIdsRef.current = null;
+    dashboardErrorLogged.current = false;
     let isUnmounted = false;
     const loadNotifications = async () => {
       try {
-        const dashboard = await jobApi.dashboard(token);
+        const next = await pollPlatformNotifications(user, token);
         if (isUnmounted) return;
-        const next = [];
-        if (user.role === "employer") {
-          const submitted = (dashboard.owned || []).filter((job) => job.status === "submitted").length;
-          const newApplications = (dashboard.owned || []).reduce(
-            (sum, job) => sum + Number(job.applications_count || 0),
-            0,
-          );
-          if (submitted > 0) {
-            next.push({
-              title: "Проверка результата",
-              detail: `Ожидают проверки: ${submitted}`,
-              route: "/profile?tab=jobs",
-            });
-          }
-          if (newApplications > 0) {
-            next.push({
-              title: "Отклики",
-              detail: `Новых откликов: ${newApplications}`,
-              route: "/profile?tab=jobs",
-            });
-          }
-        } else {
-          const assigned = (dashboard.assigned || []).length;
-          const waiting = (dashboard.assigned || []).filter((job) => job.status === "in_progress").length;
-          if (assigned > 0) {
-            next.push({
-              title: "Назначенные задачи",
-              detail: `Всего: ${assigned}`,
-              route: "/profile?tab=jobs",
-            });
-          }
-          if (waiting > 0) {
-            next.push({
-              title: "В работе",
-              detail: `Активных: ${waiting}`,
-              route: "/chat",
-            });
-          }
+        dashboardErrorLogged.current = false;
+
+        const prevIds = previousNotifyIdsRef.current;
+        if (prevIds !== null) {
+          const hasNew = next.some((n) => !prevIds.has(n.id));
+          if (hasNew) playNotificationSound();
         }
+        previousNotifyIdsRef.current = new Set(next.map((n) => n.id));
+
         setNotifications(next);
       } catch (error) {
-        console.error(error);
+        if (!dashboardErrorLogged.current) {
+          console.error(error);
+          dashboardErrorLogged.current = true;
+        }
+        if (!isUnmounted) setNotifications([]);
       }
     };
 
@@ -150,40 +168,44 @@ const Navbar = () => {
       <div className={styles.headerContainer}>
         <img src={isDark ? logoDark : logoLight} className={styles.logo} alt="Логотип" />
         <nav className={`${styles.nav} ${open ? styles.mobileMenu : ""}`}>
-          <Link to="/" onClick={close} className={styles.navLink}>
-            <FaHome />
-            Главная
-          </Link>
-          {(!user || user.role === "worker") && (
-            <Link to="/jobs" onClick={close} className={styles.navLink}>
-              <FaBriefcase />
-              Задания
+          <div className={styles.navClusterLeft}>
+            <Link to="/" onClick={close} className={styles.navLink}>
+              <FaHome />
+              Главная
             </Link>
-          )}
-          {(!user || user.role === "employer") && (
-            <Link to="/post-job" onClick={close} className={styles.navLink}>
-              <FaBriefcase />
-              Разместить
+            {(!user || user.role === "worker") && (
+              <Link to="/jobs" onClick={close} className={styles.navLink}>
+                <FaBriefcase />
+                Задания
+              </Link>
+            )}
+            {(!user || user.role === "employer") && (
+              <Link to="/post-job" onClick={close} className={styles.navLink}>
+                <FaBriefcase />
+                Разместить
+              </Link>
+            )}
+            <Link to="/about" onClick={close} className={styles.navLink}>
+              О нас
             </Link>
-          )}
-          <Link to="/chat" onClick={close} className={styles.navLink}>
-            <FaComments />
-            Чат
-          </Link>
-          <Link to="/reviews" onClick={close} className={styles.navLink}>
-            <FaUser />
-            Отзывы
-          </Link>
-          <Link to="/about" onClick={close} className={styles.navLink}>
-            О нас
-          </Link>
-          {user ? (
-            <div className={styles.navAuth}>
-              <div className={styles.dropdownWrap} ref={notificationsDropdownRef}>
+          </div>
+          <div className={styles.navClusterRight}>
+            <Link to="/chat" onClick={close} className={styles.navLink}>
+              <FaComments />
+              Чат
+            </Link>
+            <Link to="/reviews" onClick={close} className={styles.navLink}>
+              <FaUser />
+              Отзывы
+            </Link>
+            {user ? (
+              <div className={styles.navAuth}>
+                <div className={styles.dropdownWrap} ref={notificationsDropdownRef}>
                 <button
                   className={styles.notificationButton}
                   type="button"
                   onClick={() => {
+                    unlockNotificationAudio();
                     setNotificationsOpen((prev) => !prev);
                     setProfileOpen(false);
                   }}
@@ -195,12 +217,17 @@ const Navbar = () => {
                   <div className={styles.dropdownMenu}>
                     <h4>Уведомления</h4>
                     {notifications.length === 0 && <p className="muted-text">Новых уведомлений нет</p>}
-                    {notifications.map((item, index) => (
+                    {notifications.map((item) => (
                       <button
-                        key={`${item.title}-${index}`}
+                        key={item.id}
                         className={styles.notificationItem}
                         onClick={() => {
-                          navigate(item.route || "/profile?tab=jobs");
+                          if (item.dismissOnly) {
+                            dismissNotification(user.id, item.id);
+                            setNotifications((prev) => prev.filter((n) => n.id !== item.id));
+                            return;
+                          }
+                          if (item.route) navigate(item.route);
                           close();
                         }}
                         type="button"
@@ -211,9 +238,9 @@ const Navbar = () => {
                     ))}
                   </div>
                 )}
-              </div>
+                </div>
 
-              <div className={styles.dropdownWrap} ref={profileDropdownRef}>
+                <div className={styles.dropdownWrap} ref={profileDropdownRef}>
                 <button
                   className={styles.profileButton}
                   type="button"
@@ -237,27 +264,26 @@ const Navbar = () => {
                         <option value="employer">Работодатель</option>
                       </select>
                     </label>
-                    <button className={styles.dropdownButton} onClick={toggleTheme} type="button">
-                      {isDark ? <FaSun /> : <FaMoon />}
-                      {isDark ? "Светлая тема" : "Темная тема"}
-                    </button>
                     <button className={styles.dropdownButton} onClick={logout} type="button">
                       Выйти
                     </button>
                   </div>
                 )}
+                </div>
+                {themeSwitch}
               </div>
-            </div>
-          ) : (
-            <div className={styles.navAuth}>
-              <Link to="/login" onClick={close} className={styles.navLink}>
-                Вход
-              </Link>
-              <Link to="/register" onClick={close} className="primary-button ghost">
-                Регистрация
-              </Link>
-            </div>
-          )}
+            ) : (
+              <div className={styles.navAuth}>
+                <Link to="/login" onClick={close} className={styles.navLink}>
+                  Вход
+                </Link>
+                <Link to="/register" onClick={close} className="primary-button ghost">
+                  Регистрация
+                </Link>
+                {themeSwitch}
+              </div>
+            )}
+          </div>
         </nav>
         <div className={styles.actions}>
           <button className={styles.mobileMenuButton} onClick={() => setOpen((value) => !value)} type="button">

@@ -7,14 +7,42 @@ from .models import Job, JobApplication, WorkSubmission, JobStatusUpdate, JobBid
 class JobSerializer(serializers.ModelSerializer):
     employer = UserSerializer(read_only=True)
     assigned_to = UserSerializer(read_only=True)
-    applications_count = serializers.IntegerField(
-        source="applications.count",
-        read_only=True,
-    )
-    submissions_count = serializers.IntegerField(
-        source="submissions.count",
-        read_only=True,
-    )
+    applications_count = serializers.SerializerMethodField()
+    submissions_count = serializers.SerializerMethodField()
+    my_application_status = serializers.SerializerMethodField()
+
+    def get_applications_count(self, obj):
+        return obj.applications.count()
+
+    def get_submissions_count(self, obj):
+        return obj.submissions.count()
+
+    def get_my_application_status(self, obj):
+        request = self.context.get("request")
+        if not request or not request.user.is_authenticated:
+            return None
+        if getattr(request.user, "role", None) != "worker":
+            return None
+        pref = getattr(obj, "_my_worker_application", None)
+        if pref:
+            return pref[0].status
+        try:
+            return (
+                JobApplication.objects.only("status")
+                .get(job=obj, worker=request.user)
+                .status
+            )
+        except JobApplication.DoesNotExist:
+            return None
+
+    def to_internal_value(self, data):
+        if hasattr(data, "copy"):
+            data = data.copy()
+        elif isinstance(data, dict):
+            data = dict(data)
+        if isinstance(data, dict) and data.get("deadline") == "":
+            data["deadline"] = None
+        return super().to_internal_value(data)
 
     class Meta:
         model = Job
@@ -31,6 +59,7 @@ class JobSerializer(serializers.ModelSerializer):
             "budget_max",
             "deadline",
             "status",
+            "completed_at",
             "skills_required",
             "attachments",
             "is_urgent",
@@ -42,8 +71,13 @@ class JobSerializer(serializers.ModelSerializer):
             "created_at",
             "updated_at",
             "submissions_count",
+            "my_application_status",
         ]
-        read_only_fields = ["status", "employer", "assigned_to"]
+        read_only_fields = ["status", "employer", "assigned_to", "completed_at"]
+        extra_kwargs = {
+            "attachments": {"allow_blank": True, "required": False},
+            "deadline": {"allow_null": True, "required": False},
+        }
 
 
 class JobApplicationSerializer(serializers.ModelSerializer):

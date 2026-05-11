@@ -43,6 +43,12 @@ class Job(models.Model):
     is_urgent = models.BooleanField(default=False)
     is_contest = models.BooleanField(default=False)
     is_exchange = models.BooleanField(default=False)
+    completed_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name="Закрытие контракта",
+        help_text="Момент перевода задания в «Завершено»; начало 14-дневного окна отзывов.",
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

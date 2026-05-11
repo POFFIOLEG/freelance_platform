@@ -1,7 +1,6 @@
 from pathlib import Path
 import os
 
-import dj_database_url
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -16,10 +15,15 @@ ALLOWED_HOSTS = [
     host.strip()
     for host in os.getenv(
         "DJANGO_ALLOWED_HOSTS",
-        "localhost,127.0.0.1,0.0.0.0",
+        "localhost,127.0.0.1,0.0.0.0,[::1]",
     ).split(",")
     if host.strip()
 ]
+
+# В DEBUG разрешаем любой Host (удобно при доступе по LAN IP / другому имени машины).
+# В продакшене задайте DJANGO_ALLOWED_HOSTS явным списком и DEBUG=false.
+if DEBUG and "*" not in ALLOWED_HOSTS:
+    ALLOWED_HOSTS = [*ALLOWED_HOSTS, "*"]
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -71,6 +75,13 @@ ASGI_APPLICATION = "config.asgi.application"
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
+    try:
+        import dj_database_url
+    except ImportError as exc:
+        raise ImportError(
+            "Установите пакет dj-database-url (pip install dj-database-url) "
+            "или уберите DATABASE_URL из окружения для SQLite по умолчанию."
+        ) from exc
     DATABASES = {
         "default": dj_database_url.parse(
             DATABASE_URL,

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import styles from "./Chat.module.css";
 import { useAuth } from "../context/AuthContext.jsx";
 import { chatApi, jobApi } from "../api/client.js";
@@ -22,6 +23,7 @@ const formatTime = (value) => {
 
 const Chat = () => {
   const { user, token } = useAuth();
+  const [searchParams] = useSearchParams();
   const [jobs, setJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState("");
   const [messagesByJob, setMessagesByJob] = useState({});
@@ -30,6 +32,7 @@ const Chat = () => {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const jobQueryHandledRef = useRef(undefined);
 
   const readStorageKey = `${READ_STATE_KEY}:${user?.id || "anonymous"}`;
   const [lastSeenByJob, setLastSeenByJob] = useState(() => {
@@ -70,10 +73,29 @@ const Chat = () => {
   }, [readStorageKey, user]);
 
   useEffect(() => {
-    if (!selectedJob && jobs.length > 0) {
-      setSelectedJob(String(jobs[0].id));
+    if (!jobs.length) return;
+    const fromQuery = searchParams.get("job");
+    const paramKey = fromQuery ?? "";
+    const queryValid = Boolean(fromQuery && jobs.some((j) => String(j.id) === String(fromQuery)));
+    const paramChanged = jobQueryHandledRef.current !== paramKey;
+
+    if (queryValid && paramChanged) {
+      jobQueryHandledRef.current = paramKey;
+      setSelectedJob(String(fromQuery));
+      return;
     }
-  }, [jobs, selectedJob]);
+
+    if (queryValid) {
+      jobQueryHandledRef.current = paramKey;
+      return;
+    }
+
+    jobQueryHandledRef.current = paramKey;
+    setSelectedJob((prev) => {
+      if (prev && jobs.some((j) => String(j.id) === prev)) return prev;
+      return String(jobs[0].id);
+    });
+  }, [jobs, searchParams]);
 
   const recalculateUnread = (jobId, messages, readMap = lastSeenByJob) => {
     if (!jobId) return;

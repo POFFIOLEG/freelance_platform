@@ -13,25 +13,54 @@ const buildHeaders = (token, extra = {}) => {
   return headers;
 };
 
+const formatErrorBody = (payload, status) => {
+  if (payload == null || typeof payload !== "object") {
+    return `Запрос завершился с ошибкой ${status}`;
+  }
+  if (payload.detail != null) {
+    const d = payload.detail;
+    if (Array.isArray(d)) {
+      return d
+        .map((item) => (typeof item === "string" ? item : item?.string || JSON.stringify(item)))
+        .join(" ");
+    }
+    return String(d);
+  }
+  if (payload.message) return String(payload.message);
+  if (payload.error) return String(payload.error);
+  const fieldLines = Object.entries(payload).map(([key, val]) => {
+    if (Array.isArray(val)) return `${key}: ${val.join(" ")}`;
+    if (val && typeof val === "object") return `${key}: ${JSON.stringify(val)}`;
+    return `${key}: ${val}`;
+  });
+  if (fieldLines.length) return fieldLines.join("\n");
+  return `Запрос завершился с ошибкой ${status}`;
+};
+
 const handleResponse = async (response) => {
   if (response.status === 204) {
     return null;
   }
 
+  const contentType = response.headers.get("content-type") || "";
   let payload = null;
   try {
-    payload = await response.json();
+    if (contentType.includes("application/json")) {
+      payload = await response.json();
+    } else {
+      const text = await response.text();
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        payload = text ? { detail: text.slice(0, 500) } : null;
+      }
+    }
   } catch {
     payload = null;
   }
 
   if (!response.ok) {
-    const detail =
-      payload?.detail ||
-      payload?.error ||
-      payload?.message ||
-      `Запрос завершился с ошибкой ${response.status}`;
-    throw new Error(detail);
+    throw new Error(formatErrorBody(payload, response.status));
   }
 
   return payload;
@@ -89,7 +118,7 @@ export const authApi = {
     },
     async update(payload, token) {
       return apiFetch("/api/auth/profile/", {
-        method: "PUT",
+        method: "PATCH",
         body: payload,
         token,
       });
@@ -210,6 +239,10 @@ export const reviewApi = {
   },
   async create(payload, token) {
     return apiFetch("/api/reviews/", { method: "POST", body: payload, token });
+  },
+  async summary(userId, token) {
+    const query = serializeQuery({ user: userId });
+    return apiFetch(`/api/reviews/summary/${query}`, { method: "GET", token });
   },
 };
 

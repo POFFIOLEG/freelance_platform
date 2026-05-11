@@ -101,6 +101,8 @@ const PostJob = () => {
       await jobApi.create(
         {
           ...form,
+          deadline: form.deadline ? form.deadline : null,
+          attachments: (form.attachments || "").trim(),
           budget_min: form.budget_min ? Number(form.budget_min) : 0,
           budget_max: form.budget_max ? Number(form.budget_max) : 0,
           skills_required: form.skills_required

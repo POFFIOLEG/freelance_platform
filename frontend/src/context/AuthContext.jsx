@@ -77,7 +77,9 @@ export const AuthProvider = ({ children }) => {
       prev
         ? {
             ...prev,
-            profile,
+            first_name: profile.first_name ?? prev.first_name,
+            last_name: profile.last_name ?? prev.last_name,
+            profile: { ...prev.profile, ...profile },
           }
         : prev,
     );
@@ -91,7 +93,9 @@ export const AuthProvider = ({ children }) => {
       prev
         ? {
             ...prev,
-            profile,
+            first_name: profile.first_name ?? prev.first_name,
+            last_name: profile.last_name ?? prev.last_name,
+            profile: { ...prev.profile, ...profile },
           }
         : prev,
     );

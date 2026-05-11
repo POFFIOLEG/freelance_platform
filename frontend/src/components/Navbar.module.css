@@ -14,8 +14,8 @@
     padding: 0.55rem 1.25rem;
     display: flex;
     align-items: center;
-    justify-content: space-between;
-    gap: 1rem;
+    justify-content: flex-start;
+    gap: 0.75rem;
 }
 
 .logo {
@@ -23,18 +23,38 @@
     height: 60px;
     object-fit: cover;
     display: block;
+    flex-shrink: 0;
 }
 
 .actions {
     display: flex;
     align-items: center;
     gap: 0.65rem;
+    margin-left: auto;
+    flex-shrink: 0;
 }
 
 .nav {
     display: flex;
     align-items: center;
-    gap: 1rem;
+    flex: 1;
+    min-width: 0;
+    gap: clamp(0.85rem, 2.2vw, 1.75rem);
+}
+
+.navClusterLeft {
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+    flex-shrink: 0;
+}
+
+.navClusterRight {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.45rem 0.65rem;
+    margin-left: auto;
 }
 
 .navLink {
@@ -56,6 +76,68 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+}
+
+.themeSwitch {
+    flex-shrink: 0;
+    border: none;
+    background: transparent;
+    padding: 0.15rem 0.1rem;
+    cursor: pointer;
+    color: var(--text-color);
+}
+
+.themeSwitch:focus-visible {
+    outline: 2px solid var(--accent-main);
+    outline-offset: 3px;
+    border-radius: 10px;
+}
+
+.themeSwitchInner {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.themeSwitchIcon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.72rem;
+    opacity: 0.72;
+    color: var(--text-secondary);
+}
+
+.themeSwitchTrack {
+    position: relative;
+    width: 46px;
+    height: 24px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--text-secondary) 18%, var(--surface-bg));
+    border: 1px solid var(--border-color);
+    transition: background 0.2s ease, border-color 0.2s ease;
+    flex-shrink: 0;
+}
+
+.themeSwitchTrackOn {
+    background: color-mix(in srgb, var(--accent-main) 38%, var(--surface-bg));
+    border-color: color-mix(in srgb, var(--accent-main) 42%, var(--border-color));
+}
+
+.themeSwitchThumb {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: var(--surface-bg);
+    box-shadow: 0 1px 4px color-mix(in srgb, #000 20%, transparent);
+    transition: transform 0.22s ease;
+}
+
+.themeSwitchThumbOn {
+    transform: translateX(24px);
 }
 
 .notificationButton {
@@ -197,8 +279,21 @@
     .nav {
         display: none;
         flex-direction: column;
-        align-items: flex-start;
+        align-items: stretch;
         width: 100%;
+        gap: 0.65rem;
+    }
+
+    .navClusterLeft,
+    .navClusterRight {
+        flex-direction: column;
+        align-items: stretch;
+        margin-left: 0;
+        gap: 0.35rem;
+    }
+
+    .navAuth {
+        flex-wrap: wrap;
     }
 
     .mobileMenu {
