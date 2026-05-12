@@ -1,10 +1,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { FaPaperclip } from "react-icons/fa";
 import styles from "./Chat.module.css";
 import { useAuth } from "../context/AuthContext.jsx";
 import { chatApi, jobApi } from "../api/client.js";
 
 const READ_STATE_KEY = "chat:last-seen";
+const MAX_CHAT_FILES = 12;
+
+function jobChatEligible(job) {
+  return job?.assigned_to != null && job.assigned_to?.id != null;
+}
 
 const toMillis = (value) => {
   const parsed = new Date(value).getTime();
@@ -21,6 +27,12 @@ const formatTime = (value) => {
   });
 };
 
+const attachmentUrls = (item) => {
+  if (Array.isArray(item.attachments) && item.attachments.length) return item.attachments;
+  if (item.attachment) return [item.attachment];
+  return [];
+};
+
 const Chat = () => {
   const { user, token } = useAuth();
   const [searchParams] = useSearchParams();
@@ -30,9 +42,15 @@ const Chat = () => {
   const [unreadByJob, setUnreadByJob] = useState({});
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
+  const [attachFiles, setAttachFiles] = useState([]);
+  const [attachMenuOpen, setAttachMenuOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const jobQueryHandledRef = useRef(undefined);
+  const messagesScrollRef = useRef(null);
+  const attachMenuRef = useRef(null);
+  const photoInputRef = useRef(null);
+  const docInputRef = useRef(null);
 
   const readStorageKey = `${READ_STATE_KEY}:${user?.id || "anonymous"}`;
   const [lastSeenByJob, setLastSeenByJob] = useState(() => {
@@ -50,12 +68,27 @@ const Chat = () => {
     return !q || job.title.toLowerCase().includes(q);
   });
 
+  const addAttachFiles = (fileList) => {
+    const arr = Array.from(fileList || []).filter(Boolean);
+    if (arr.length === 0) return;
+    setAttachFiles((prev) => {
+      const next = [...prev];
+      for (const f of arr) {
+        if (next.length >= MAX_CHAT_FILES) break;
+        const dup = next.some((x) => x.name === f.name && x.size === f.size);
+        if (!dup) next.push(f);
+      }
+      return next;
+    });
+  };
+
   useEffect(() => {
     const loadJobs = async () => {
       if (!token) return;
       try {
         const dashboard = await jobApi.dashboard(token);
-        setJobs([...(dashboard.owned || []), ...(dashboard.assigned || [])]);
+        const merged = [...(dashboard.owned || []), ...(dashboard.assigned || [])];
+        setJobs(merged.filter(jobChatEligible));
       } catch (err) {
         setError(err.message);
       }
@@ -75,6 +108,12 @@ const Chat = () => {
   useEffect(() => {
     if (!jobs.length) return;
     const fromQuery = searchParams.get("job");
+    if (fromQuery && !jobs.some((j) => String(j.id) === String(fromQuery))) {
+      jobQueryHandledRef.current = fromQuery;
+      setSelectedJob("");
+      setError("Чат по этому заданию недоступен: исполнитель не назначен или снят.");
+      return;
+    }
     const paramKey = fromQuery ?? "";
     const queryValid = Boolean(fromQuery && jobs.some((j) => String(j.id) === String(fromQuery)));
     const paramChanged = jobQueryHandledRef.current !== paramKey;
@@ -106,16 +145,39 @@ const Chat = () => {
     setUnreadByJob((prev) => ({ ...prev, [jobId]: unread }));
   };
 
-  const fetchMessages = async (jobId, { setLoad = false } = {}) => {
+  const fetchMessages = async (jobId, { setLoad = false, silent403 = false } = {}) => {
     if (!jobId || !token) return [];
-    if (setLoad) setLoading(true);
+    if (setLoad) {
+      setLoading(true);
+      setError("");
+    }
     try {
-      const items = await chatApi.list(jobId, token);
+      const raw = await chatApi.list(jobId, token);
+      const items = Array.isArray(raw) ? raw : raw?.results || [];
       const key = String(jobId);
       setMessagesByJob((prev) => ({ ...prev, [key]: items }));
       recalculateUnread(key, items);
       return items;
     } catch (err) {
+      const is403 = err?.status === 403;
+      if (is403) {
+        setJobs((prev) => prev.filter((j) => String(j.id) !== String(jobId)));
+        setMessagesByJob((prev) => {
+          const k = String(jobId);
+          const { [k]: _, ...rest } = prev;
+          return rest;
+        });
+        setUnreadByJob((prev) => {
+          const k = String(jobId);
+          const { [k]: _, ...rest } = prev;
+          return rest;
+        });
+        setSelectedJob((prev) => (prev === String(jobId) ? "" : prev));
+        if (!silent403) {
+          setError(err.message || "Чат по этому заданию недоступен.");
+        }
+        return [];
+      }
       setError(err.message);
       return [];
     } finally {
@@ -159,7 +221,7 @@ const Chat = () => {
     const refreshAll = async () => {
       const result = await Promise.all(
         jobs.map(async (job) => {
-          const items = await fetchMessages(job.id);
+          const items = await fetchMessages(String(job.id), { silent403: true });
           return { id: String(job.id), items };
         }),
       );
@@ -179,17 +241,58 @@ const Chat = () => {
     };
   }, [jobs, token]);
 
+  useEffect(() => {
+    const el = messagesScrollRef.current;
+    if (!el) return;
+    el.scrollTop = el.scrollHeight;
+  }, [selectedJob, selectedMessages.length, loading]);
+
+  useEffect(() => {
+    if (!attachMenuOpen) return;
+    const onDoc = (e) => {
+      if (attachMenuRef.current && !attachMenuRef.current.contains(e.target)) {
+        setAttachMenuOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", onDoc);
+    return () => document.removeEventListener("mousedown", onDoc);
+  }, [attachMenuOpen]);
+
+  const clearAttachments = () => {
+    setAttachFiles([]);
+    if (photoInputRef.current) photoInputRef.current.value = "";
+    if (docInputRef.current) docInputRef.current.value = "";
+  };
+
   const handleSend = async (event) => {
     event.preventDefault();
-    if (!message.trim() || !selectedJob) return;
+    if ((!message.trim() && attachFiles.length === 0) || !selectedJob) return;
     try {
-      await chatApi.send(selectedJob, { text: message.trim() }, token);
+      if (attachFiles.length > 0) {
+        const fd = new FormData();
+        fd.append("text", message.trim());
+        attachFiles.forEach((f) => fd.append("attachments", f));
+        await chatApi.send(selectedJob, fd, token);
+      } else {
+        await chatApi.send(selectedJob, { text: message.trim() }, token);
+      }
       setMessage("");
+      clearAttachments();
       const items = await fetchMessages(selectedJob);
       markChatAsRead(selectedJob, items);
     } catch (err) {
       setError(err.message);
     }
+  };
+
+  const lastLinePreview = (msg) => {
+    if (!msg) return "Пока нет сообщений";
+    const t = (msg.text || "").trim();
+    const n = attachmentUrls(msg).length;
+    if (t && n) return `${t.length > 48 ? `${t.slice(0, 48)}…` : t} · 📎${n}`;
+    if (t) return t.length > 72 ? `${t.slice(0, 72)}…` : t;
+    if (n) return `📎 ${n} ${n === 1 ? "файл" : n < 5 ? "файла" : "файлов"}`;
+    return "Пока нет сообщений";
   };
 
   if (!user) {
@@ -237,9 +340,7 @@ const Chat = () => {
                     {unreadCount > 0 && <span className={styles.unreadBadge}>{unreadCount}</span>}
                   </div>
                   <div className={styles.chatItemBottom}>
-                    <span className="muted-text">
-                      {lastMessage?.text ? lastMessage.text : "Пока нет сообщений"}
-                    </span>
+                    <span className="muted-text">{lastLinePreview(lastMessage)}</span>
                     <span className="muted-text">{formatTime(lastMessage?.created_at)}</span>
                   </div>
                 </button>
@@ -250,43 +351,150 @@ const Chat = () => {
 
         <section className={styles.chatPane}>
           <div className={styles.chatPaneHeader}>
-            <h3>Чат по заданию</h3>
-            {selectedJob && (
-              <span className="muted-text">{selectedJobDetails?.title || "Выбранный чат"}</span>
-            )}
+            <div className={styles.chatPaneHeaderText}>
+              <h3>Чат по заданию</h3>
+              {selectedJob ? (
+                <span className="muted-text">{selectedJobDetails?.title || "Выбранный чат"}</span>
+              ) : null}
+            </div>
+            {selectedJob ? (
+              <div className={styles.attachWrap} ref={attachMenuRef}>
+                <button
+                  type="button"
+                  className={styles.attachToggle}
+                  onClick={() => setAttachMenuOpen((o) => !o)}
+                  title="Прикрепить файлы"
+                  aria-expanded={attachMenuOpen}
+                  aria-haspopup="true"
+                >
+                  <FaPaperclip aria-hidden />
+                </button>
+                {attachMenuOpen ? (
+                  <div className={styles.attachMenu} role="menu">
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.attachMenuItem}
+                      onClick={() => {
+                        setAttachMenuOpen(false);
+                        photoInputRef.current?.click();
+                      }}
+                    >
+                      Фото
+                    </button>
+                    <button
+                      type="button"
+                      role="menuitem"
+                      className={styles.attachMenuItem}
+                      onClick={() => {
+                        setAttachMenuOpen(false);
+                        docInputRef.current?.click();
+                      }}
+                    >
+                      Документ
+                    </button>
+                  </div>
+                ) : null}
+                <input
+                  ref={photoInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple
+                  className={styles.hiddenFile}
+                  onChange={(e) => {
+                    addAttachFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+                <input
+                  ref={docInputRef}
+                  type="file"
+                  accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar,.7z,.odt,.ods,image/*"
+                  multiple
+                  className={styles.hiddenFile}
+                  onChange={(e) => {
+                    addAttachFiles(e.target.files);
+                    e.target.value = "";
+                  }}
+                />
+              </div>
+            ) : null}
           </div>
           {error && <p className="error-text">{error}</p>}
           {!selectedJob && <p className="muted-text">Сначала выберите чат в левой колонке.</p>}
           {selectedJob && (
             <>
-              <div className={styles.messagesContainer}>
-                {loading && <p>Загружаем сообщения...</p>}
-                {!loading && selectedMessages.length === 0 && (
-                  <p className="muted-text">Сообщений пока нет. Начните диалог.</p>
-                )}
-                {selectedMessages.map((item) => (
-                  <div
-                    key={item.id}
-                    className={`${styles.messageRow} ${item.sender.id === user.id ? styles.messageOwnRow : ""}`}
-                  >
-                    <div className={`${styles.messageBubble} ${item.sender.id === user.id ? styles.messageOwn : ""}`}>
-                      <div className={styles.messageMeta}>
-                        <strong>{item.sender.username}</strong>
-                        <span>{formatTime(item.created_at)}</span>
+              <div className={styles.messagesScroll} ref={messagesScrollRef}>
+                <div className={styles.messagesInner}>
+                  {loading && <p className="muted-text">Загружаем сообщения...</p>}
+                  {!loading && selectedMessages.length === 0 && (
+                    <p className="muted-text">Сообщений пока нет. Начните диалог.</p>
+                  )}
+                  {selectedMessages.map((item) => {
+                    const urls = attachmentUrls(item);
+                    return (
+                      <div
+                        key={item.id}
+                        className={`${styles.messageRow} ${item.sender.id === user.id ? styles.messageOwnRow : ""}`}
+                      >
+                        <div
+                          className={`${styles.messageBubble} ${item.sender.id === user.id ? styles.messageOwn : ""}`}
+                        >
+                          <div className={styles.messageMeta}>
+                            <strong>{item.sender.username}</strong>
+                            <span>{formatTime(item.created_at)}</span>
+                          </div>
+                          {item.text ? <p>{item.text}</p> : null}
+                          {urls.length > 0 ? (
+                            <div className={styles.attachLinks}>
+                              {urls.map((url, idx) => (
+                                <a key={url + idx} href={url} target="_blank" rel="noreferrer">
+                                  {urls.length > 1 ? `Вложение ${idx + 1}` : "Вложение"}
+                                </a>
+                              ))}
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
-                      <p>{item.text}</p>
-                    </div>
-                  </div>
-                ))}
+                    );
+                  })}
+                </div>
               </div>
               <form className={styles.chatForm} onSubmit={handleSend}>
-                <textarea
-                  rows={3}
-                  placeholder="Ваше сообщение"
-                  value={message}
-                  onChange={(event) => setMessage(event.target.value)}
-                />
-                <button className="primary-button" disabled={!message.trim()}>
+                {attachFiles.length > 0 ? (
+                  <div className={styles.attachChips}>
+                    {attachFiles.map((f, idx) => (
+                      <span key={`${f.name}-${idx}`} className={styles.attachChip}>
+                        {f.name}
+                        <button
+                          type="button"
+                          className={styles.attachChipRemove}
+                          onClick={() => setAttachFiles((prev) => prev.filter((_, i) => i !== idx))}
+                          aria-label="Убрать файл"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                    <button type="button" className="link-button" onClick={clearAttachments}>
+                      Очистить всё
+                    </button>
+                  </div>
+                ) : null}
+                <div className={styles.composeRow}>
+                  <textarea
+                    rows={3}
+                    className={styles.composeTextarea}
+                    placeholder="Ваше сообщение"
+                    value={message}
+                    onChange={(event) => setMessage(event.target.value)}
+                  />
+                </div>
+                <button
+                  className="primary-button"
+                  disabled={!message.trim() && attachFiles.length === 0}
+                  type="submit"
+                >
                   Отправить
                 </button>
               </form>
@@ -299,4 +507,3 @@ const Chat = () => {
 };
 
 export default Chat;
-

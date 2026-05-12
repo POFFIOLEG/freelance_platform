@@ -1,0 +1,102 @@
+.root {
+  max-width: 880px;
+  margin: 0 auto;
+}
+
+.title {
+  margin: 0 0 0.35rem;
+}
+
+.tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin: 1rem 0 1.25rem;
+}
+
+.tab,
+.tabActive {
+  border-radius: 999px;
+  padding: 0.4rem 0.85rem;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid var(--soft-border);
+  background: color-mix(in srgb, var(--surface-bg) 92%, transparent);
+  color: var(--text-color);
+}
+
+.tabActive {
+  border-color: var(--accent-main);
+  background: color-mix(in srgb, var(--accent-main) 18%, transparent);
+  font-weight: 600;
+}
+
+.tabCount {
+  opacity: 0.85;
+  font-size: 0.85em;
+}
+
+.list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.card {
+  border: 1px solid var(--soft-border);
+  border-radius: 14px;
+  padding: 1rem;
+  background: color-mix(in srgb, var(--surface-bg) 88%, transparent);
+}
+
+.cardTop {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.jobTitle {
+  font-weight: 700;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.jobTitle:hover {
+  text-decoration: underline;
+}
+
+.budget {
+  flex-shrink: 0;
+  font-weight: 600;
+}
+
+.excerpt {
+  margin: 0 0 0.65rem;
+  font-size: 0.92rem;
+  color: var(--muted-text, #888);
+  line-height: 1.45;
+}
+
+.cardMeta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.pill {
+  font-size: 0.8rem;
+  padding: 0.15rem 0.5rem;
+  border-radius: 6px;
+  background: color-mix(in srgb, var(--text-color) 10%, transparent);
+}
+
+.appTag {
+  font-size: 0.85rem;
+  color: var(--accent-main);
+}

@@ -4,6 +4,9 @@ export const getJobCardStatus = (status) => {
   if (s === "completed" || s === "cancelled") {
     return { label: "Закрыто", group: "closed" };
   }
+  if (s === "disputed") {
+    return { label: "Спор", group: "disputed" };
+  }
   if (s === "in_progress" || s === "submitted") {
     return { label: "Исполнитель определён", group: "assigned" };
   }

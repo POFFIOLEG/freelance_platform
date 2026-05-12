@@ -26,12 +26,14 @@ if DEBUG and "*" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS = [*ALLOWED_HOSTS, "*"]
 
 INSTALLED_APPS = [
+    "daphne",
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "channels",
     "rest_framework",
     "rest_framework.authtoken",
     "corsheaders",
@@ -39,6 +41,7 @@ INSTALLED_APPS = [
     "jobs",
     "chat",
     "reviews",
+    "workhub",
 ]
 
 MIDDLEWARE = [
@@ -73,6 +76,15 @@ TEMPLATES = [
 WSGI_APPLICATION = "config.wsgi.application"
 ASGI_APPLICATION = "config.asgi.application"
 
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer",
+    },
+}
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
 DATABASE_URL = os.getenv("DATABASE_URL")
 if DATABASE_URL:
     try:
@@ -97,11 +109,16 @@ else:
         }
     }
 
+# Сообщения об ошибках пароля на русском (см. accounts.validators).
 AUTH_PASSWORD_VALIDATORS = [
-    {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
-    {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
-    {"NAME": "django.contrib.auth.password_validation.CommonPasswordValidator"},
-    {"NAME": "django.contrib.auth.password_validation.NumericPasswordValidator"},
+    {"NAME": "accounts.validators.RussianUserAttributeSimilarityValidator"},
+    {
+        "NAME": "accounts.validators.RussianMinimumLengthValidator",
+        "OPTIONS": {"min_length": 8},
+    },
+    {"NAME": "accounts.validators.RussianCommonPasswordValidator"},
+    {"NAME": "accounts.validators.RussianNumericPasswordValidator"},
+    {"NAME": "accounts.validators.RussianComplexityValidator"},
 ]
 
 LANGUAGE_CODE = "ru-ru"
@@ -127,6 +144,22 @@ REST_FRAMEWORK = {
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticatedOrReadOnly",
     ],
+    "DEFAULT_THROTTLE_CLASSES": [
+        "rest_framework.throttling.AnonRateThrottle",
+        "rest_framework.throttling.UserRateThrottle",
+    ],
+    "DEFAULT_THROTTLE_RATES": {
+        "anon": "120/hour",
+        "user": "2000/hour",
+        "job_create": "15/hour",
+        "job_apply": "40/hour",
+        "chat_send": "120/hour",
+        # Регистрация: слишком низкий лимит режет тесты и одну Wi‑Fi сеть; при необходимости ужесточите в проде.
+        "auth_register": "60/hour",
+        "auth_login": "60/hour",
+        "push_register": "20/hour",
+    },
+    "EXCEPTION_HANDLER": "config.exceptions.russian_exception_handler",
 }
 
 CORS_ALLOWED_ORIGINS = [

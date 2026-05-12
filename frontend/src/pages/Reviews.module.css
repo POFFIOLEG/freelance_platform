@@ -1,2 +1,47 @@
 .root {
 }
+
+.leaderboardCard h3 {
+  margin-top: 0;
+}
+
+.leaderboardList {
+  margin: 0.5rem 0 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.leaderboardRow {
+  display: grid;
+  grid-template-columns: 2rem 1fr auto;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--soft-border, rgba(255, 255, 255, 0.12));
+  background: color-mix(in srgb, var(--surface-bg, #1a1a1a) 90%, transparent);
+}
+
+.leaderboardRank {
+  font-weight: 700;
+  color: var(--text-secondary, #aaa);
+  text-align: center;
+}
+
+.leaderboardName {
+  font-weight: 600;
+  color: var(--text-color);
+  text-decoration: none;
+}
+
+.leaderboardName:hover {
+  text-decoration: underline;
+}
+
+.leaderboardStats {
+  font-size: 0.95rem;
+  white-space: nowrap;
+}

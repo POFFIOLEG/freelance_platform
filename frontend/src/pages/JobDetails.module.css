@@ -1,9 +1,27 @@
 .root {
 }
 
+.simpleList {
+  margin: 0.25rem 0 0.75rem;
+  padding-left: 1.2rem;
+}
+
+.inlineRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.inlineRow textarea {
+  flex: 1 1 220px;
+  min-width: 200px;
+}
+
 .topLinks {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-start;
   align-items: center;
   margin: 0.8rem 0 1rem;
 }
@@ -57,6 +75,13 @@
 .applicationRow:first-of-type {
   border-top: none;
   padding-top: 0;
+}
+
+.applicationWorkerLine {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
 }
 
 .appStatus {
@@ -165,11 +190,96 @@
 .modalFooter {
   display: flex;
   flex-wrap: wrap;
-  gap: 0.6rem;
-  justify-content: flex-end;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
   margin-top: 0.35rem;
   padding-top: 0.85rem;
   border-top: 1px solid var(--soft-border);
+}
+
+.modalFooterActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: flex-end;
+  flex: 1;
+  min-width: 0;
+}
+
+.modalFeedbackLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  font-size: 0.88rem;
+  color: var(--muted-text, #888);
+}
+
+.modalFeedbackTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 72px;
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--soft-border);
+  background: var(--surface-bg);
+  color: var(--text-color);
+  font: inherit;
+  resize: vertical;
+}
+
+.modalDangerButton {
+  border-radius: 10px;
+  padding: 0.55rem 1rem;
+  border: 1px solid color-mix(in srgb, #c55 45%, var(--soft-border));
+  background: color-mix(in srgb, #a33 22%, var(--surface-bg));
+  color: var(--text-color);
+  cursor: pointer;
+  font: inherit;
+  font-weight: 600;
+}
+
+.modalDangerButton:hover:not(:disabled) {
+  filter: brightness(1.08);
+}
+
+.modalDangerButton:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.reviewDecisionCard {
+  margin-top: 0.25rem;
+  padding: 1rem 1rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  background: color-mix(in srgb, var(--surface-bg) 88%, var(--text-color));
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.reviewDecisionHint {
+  margin: 0;
+  font-size: 0.86rem;
+  line-height: 1.45;
+  color: var(--text-secondary);
+}
+
+.reviewDecisionActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+  justify-content: flex-end;
+}
+
+.reviewDecisionActions .modalDangerButton,
+.reviewDecisionActions :global(.secondary-button),
+.reviewDecisionActions :global(.primary-button) {
+  flex: 1 1 auto;
+  min-width: min(100%, 140px);
+  justify-content: center;
 }
 
 .reviewRatingLabel {
@@ -205,4 +315,417 @@
 
 .appliedButton:disabled {
   opacity: 1;
+}
+
+.applyBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.applyTextareaWrap {
+  position: relative;
+  margin-bottom: 0.25rem;
+  padding-bottom: 1.25rem;
+}
+
+.applyTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 180px;
+  padding: 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  background: var(--surface-bg);
+  color: var(--text-color);
+  resize: vertical;
+  font: inherit;
+}
+
+.applyCounter {
+  position: absolute;
+  right: 0.35rem;
+  bottom: 0;
+  font-size: 0.8rem;
+  color: var(--muted-text, #888);
+}
+
+.applyBudgetLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.95rem;
+  color: var(--muted-text, #888);
+}
+
+.applyBudgetLabel input {
+  max-width: 200px;
+}
+
+.applySubmitRow {
+  display: flex;
+  justify-content: flex-end;
+  width: 100%;
+}
+
+/* Панели этапов / спора — в одном визуальном стиле с карточками сайта */
+.workflowPanel {
+  border: 1px solid var(--soft-border);
+  border-radius: 16px;
+  padding: 1rem 1.15rem;
+  background: color-mix(in srgb, var(--surface-bg) 90%, transparent);
+}
+
+.workflowPanelTitle {
+  margin: 0 0 0.65rem;
+  font-size: 1.08rem;
+}
+
+.workflowSubTitle {
+  margin: 1rem 0 0.5rem;
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--muted-text, #888);
+}
+
+.workflowList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.workflowListItem {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  background: color-mix(in srgb, var(--surface-bg) 94%, transparent);
+}
+
+.workflowListMain {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0.5rem 0.75rem;
+  min-width: 0;
+}
+
+.workflowMilestoneTitle {
+  font-weight: 600;
+}
+
+.workflowMuted {
+  font-size: 0.88rem;
+  color: var(--muted-text, #888);
+}
+
+.workflowDone {
+  font-size: 0.85rem;
+  color: color-mix(in srgb, var(--accent-success) 85%, var(--text-color));
+}
+
+.workflowListBtn {
+  flex-shrink: 0;
+}
+
+.workflowAddRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.35rem;
+}
+
+.workflowInput {
+  flex: 1 1 180px;
+  min-width: 140px;
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid var(--soft-border);
+  background: var(--surface-bg);
+  color: var(--text-color);
+}
+
+.workflowDate {
+  padding: 0.45rem 0.55rem;
+  border-radius: 10px;
+  border: 1px solid var(--soft-border);
+  background: var(--surface-bg);
+  color: var(--text-color);
+}
+
+.workflowHistory {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+}
+
+.workflowHistoryItem {
+  padding: 0.55rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid color-mix(in srgb, var(--soft-border) 80%, transparent);
+  font-size: 0.9rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.workflowHistoryDate {
+  font-size: 0.78rem;
+  color: var(--muted-text, #888);
+}
+
+.workflowHistorySnippet {
+  white-space: pre-wrap;
+  line-height: 1.45;
+}
+
+/* Спор и арбитраж */
+.disputeList {
+  list-style: none;
+  margin: 0 0 0.85rem;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.disputeListItem {
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  background: color-mix(in srgb, var(--surface-bg) 94%, transparent);
+}
+
+.disputeStatus {
+  display: block;
+  margin-bottom: 0.35rem;
+}
+
+.disputeSummary {
+  margin: 0;
+  font-size: 0.92rem;
+  line-height: 1.45;
+}
+
+.disputeArb {
+  margin: 0.5rem 0 0;
+  font-size: 0.85rem;
+  color: var(--muted-text, #888);
+}
+
+.disputeOpenRow,
+.disputeResolveBlock,
+.disputeArbBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.5rem;
+}
+
+.disputeTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  background: var(--surface-bg);
+  color: var(--text-color);
+  resize: vertical;
+  font: inherit;
+  min-height: 72px;
+}
+
+.disputeActions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.disputeBtnRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+/* Отправка результата + скрепка */
+.submitResultHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.submitAttachWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.submitAttachToggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  background: color-mix(in srgb, var(--surface-bg) 85%, transparent);
+  color: var(--text-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.submitAttachToggle:hover {
+  background: var(--selection-bg);
+}
+
+.submitAttachMenu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 160px;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  background: var(--surface-bg);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 5;
+  overflow: hidden;
+}
+
+.submitAttachMenuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.submitAttachMenuItem:hover {
+  background: var(--selection-bg);
+}
+
+.hiddenFileInput {
+  position: fixed;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.submitAttachChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  margin-bottom: 0.25rem;
+}
+
+.submitAttachChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 8px;
+  border: 1px solid var(--soft-border);
+  background: color-mix(in srgb, var(--surface-bg) 90%, transparent);
+  max-width: 100%;
+}
+
+.submitAttachChipRemove {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+
+.submitAttachHint {
+  margin: 0 0 0.5rem;
+  font-size: 0.82rem;
+  color: var(--muted-text, #888);
+}
+
+.submitComposeRow {
+  width: 100%;
+  margin-bottom: 0.65rem;
+}
+
+.submitComposeTextarea {
+  width: 100%;
+  box-sizing: border-box;
+  min-height: 120px;
+  resize: vertical;
+  padding: 0.65rem 0.75rem;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  background: var(--surface-bg);
+  color: var(--text-color);
+  font: inherit;
+}
+
+.submitUrlLabel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  margin-bottom: 0.75rem;
+  font-size: 0.9rem;
+  color: var(--muted-text, #888);
+}
+
+.submitUrlLabel input {
+  padding: 0.5rem 0.65rem;
+  border-radius: 10px;
+  border: 1px solid var(--soft-border);
+  background: var(--surface-bg);
+  color: var(--text-color);
+}
+
+.submitResultActions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.deliverableLinkList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.deliverableLinkRow {
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.deliverableLinkRow:last-child {
+  border-bottom: none;
+}
+
+.deliverableLinkName {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
 }

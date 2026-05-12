@@ -1,11 +1,14 @@
 .header {
     position: sticky;
     top: 0;
-    z-index: 10;
+    /* Выше оверлея меню и затемнения страницы */
+    z-index: 100;
     background: color-mix(in srgb, var(--menu-bg) 72%, transparent);
     border-bottom: 1px solid var(--border-color);
     backdrop-filter: blur(18px) saturate(145%);
     -webkit-backdrop-filter: blur(18px) saturate(145%);
+    /* Высота полоски шапки на мобилке (оверлей меню начинается ниже) */
+    --navbar-mobile-offset: 76px;
 }
 
 .headerContainer {
@@ -164,6 +167,23 @@
   gap: 0.4rem;
   color: var(--text-color);
   cursor: pointer;
+  max-width: min(280px, 56vw);
+}
+
+.profileButtonLabel {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.verifiedNavBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #0ea5e9;
+  font-size: 1rem;
+  flex-shrink: 0;
 }
 
 .dropdownWrap {
@@ -271,44 +291,134 @@
     color: var(--text-color);
 }
 
-.mobileMenu {
+.navHiddenMobile {
+    display: none;
+}
+
+/* Открытое бургер-меню: не в потоке шапки, поверх контента страницы */
+.navMobilePanel {
     display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    position: fixed;
+    left: 0;
+    top: var(--navbar-mobile-offset);
+    bottom: 0;
+    width: min(100%, 320px);
+    max-width: 92vw;
+    margin: 0;
+    padding: 0.85rem 1.1rem max(1.25rem, env(safe-area-inset-bottom));
+    gap: 0;
+    overflow: hidden;
+    border-radius: 0;
+    border: none;
+    border-right: 1px solid var(--border-color);
+    border-top: 1px solid var(--border-color);
+    background: color-mix(in srgb, var(--surface-bg) 96%, transparent);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+    box-shadow: 8px 0 36px color-mix(in srgb, var(--text-color) 12%, transparent);
+    z-index: 200;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* На десктопе обёртка «исчезает» из вёрстки — в ряд идут кластеры как раньше */
+.navDesktopBypass {
+    display: contents;
+}
+
+/* На мобилке прокручивается только список ссылок, панель фиксированной высоты экрана */
+.navMobileInner {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+    overflow-x: hidden;
+    overflow-y: auto;
+    gap: 0.75rem;
+    -webkit-overflow-scrolling: touch;
+}
+
+.navMobilePanel .navClusterLeft,
+.navMobilePanel .navClusterRight {
+    flex-direction: column;
+    align-items: stretch;
+    margin-left: 0;
+    gap: 0.35rem;
+}
+
+.navMobilePanel .navLink {
+    justify-content: flex-start;
+    border-radius: 12px;
+    padding: 0.55rem 0.75rem;
+    font-size: 0.95rem;
+}
+
+.navMobilePanel .navAuth,
+.navMobilePanel .navAuthMobile {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+}
+
+.navMobilePanel .navAuth .primary-button,
+.navMobilePanel .navAuth a.primary-button {
+    text-align: center;
+    justify-content: center;
+}
+
+.mobileBackdrop {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: var(--navbar-mobile-offset);
+    bottom: 0;
+    z-index: 199;
+    margin: 0;
+    padding: 0;
+    border: none;
+    cursor: pointer;
+    background: color-mix(in srgb, #000 42%, transparent);
+    -webkit-tap-highlight-color: transparent;
+}
+
+.headerContainerMobile {
+    flex-wrap: nowrap;
+    align-items: center;
+    min-height: var(--navbar-mobile-offset);
+    box-sizing: border-box;
+}
+
+.navAuthMobile {
+    flex-wrap: wrap;
+}
+
+.mobileMenuButtonVisible {
+    display: inline-flex;
 }
 
 @media (max-width: 768px) {
-    .nav {
-        display: none;
-        flex-direction: column;
-        align-items: stretch;
-        width: 100%;
-        gap: 0.65rem;
+    .logo {
+        width: min(148px, 46vw);
+        height: auto;
+        max-height: 52px;
+        object-fit: contain;
+        object-position: left center;
     }
 
-    .navClusterLeft,
-    .navClusterRight {
-        flex-direction: column;
-        align-items: stretch;
-        margin-left: 0;
-        gap: 0.35rem;
+    /*
+     * backdrop-filter у предка делает position:fixed у меню привязанным к шапке, а не к viewport.
+     * Тогда top:offset + bottom:0 дают нулевую высоту панели — меню «пропадает».
+     */
+    .header {
+        --navbar-mobile-offset: 72px;
+        backdrop-filter: none;
+        -webkit-backdrop-filter: none;
     }
 
-    .navAuth {
-        flex-wrap: wrap;
-    }
-
-    .mobileMenu {
-        margin-top: 0.5rem;
-        padding: 0.5rem;
-        border-radius: 12px;
-        background: color-mix(in srgb, var(--menu-bg) 78%, transparent);
-        border: 1px solid var(--border-color);
-    }
-
-    .mobileMenuButton {
-        display: inline-flex;
-    }
-
-    .headerContainer {
-        flex-wrap: wrap;
+    .headerContainerMobile {
+        min-height: var(--navbar-mobile-offset);
+        padding-top: 0.45rem;
+        padding-bottom: 0.45rem;
     }
 }

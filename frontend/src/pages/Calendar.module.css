@@ -1,0 +1,21 @@
+.root {
+  max-width: 800px;
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.section h2 {
+  margin-top: 0;
+}
+
+.list {
+  margin: 0;
+  padding-left: 1.1rem;
+}
+
+.done {
+  color: #16a34a;
+  font-weight: 600;
+}

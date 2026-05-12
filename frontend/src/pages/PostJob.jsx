@@ -1,9 +1,9 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useAuth } from "../context/AuthContext.jsx";
-import { jobApi } from "../api/client.js";
+import { hubApi, jobApi } from "../api/client.js";
 import styles from "./PostJob.module.css";
-import { COUNTRIES, getCitiesByCountry } from "../constants/geo.js";
 import { CATEGORIES } from "../constants/categories.js";
+import { COUNTRIES, getCitiesByCountry } from "../constants/geo.js";
 
 const SKILLS_SUGGESTIONS = [
   "React",
@@ -16,15 +16,6 @@ const SKILLS_SUGGESTIONS = [
   "Node.js",
 ];
 
-const LOCATION_SUGGESTIONS = [
-  "Москва",
-  "Санкт-Петербург",
-  "Казань",
-  "Новосибирск",
-  "Екатеринбург",
-  "Удаленно",
-];
-
 const initialState = {
   title: "",
   description: "",
@@ -32,7 +23,6 @@ const initialState = {
   subcategory: "",
   country: "Россия",
   city: "",
-  location: "",
   budget_min: "",
   budget_max: "",
   deadline: "",
@@ -43,12 +33,33 @@ const initialState = {
   is_exchange: false,
 };
 
+/** Сегодняшняя дата в календаре пользователя (YYYY-MM-DD) для min у input type="date". */
+function todayLocalIsoDate() {
+  const d = new Date();
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
 const PostJob = () => {
   const { user, token } = useAuth();
   const [form, setForm] = useState(initialState);
   const [selectedType, setSelectedType] = useState("");
   const [status, setStatus] = useState({ type: null, message: "" });
   const [loading, setLoading] = useState(false);
+  const [templates, setTemplates] = useState([]);
+
+  useEffect(() => {
+    if (!token || user?.role !== "employer") {
+      setTemplates([]);
+      return;
+    }
+    hubApi
+      .templatesList(token)
+      .then((list) => setTemplates(Array.isArray(list) ? list : []))
+      .catch(() => setTemplates([]));
+  }, [token, user?.role]);
 
   if (!user) {
     return (
@@ -97,14 +108,58 @@ const PostJob = () => {
     event.preventDefault();
     setLoading(true);
     setStatus({ type: null, message: "" });
+
+    const title = (form.title || "").trim();
+    const description = (form.description || "").trim();
+    if (!title || !description) {
+      setStatus({ type: "error", message: "Заполните название и описание." });
+      setLoading(false);
+      return;
+    }
+    if (!form.category?.trim() || !form.subcategory?.trim()) {
+      setStatus({ type: "error", message: "Выберите категорию и подкатегорию." });
+      setLoading(false);
+      return;
+    }
+    if (!form.deadline) {
+      setStatus({ type: "error", message: "Укажите срок сдачи." });
+      setLoading(false);
+      return;
+    }
+    const deadlineMin = todayLocalIsoDate();
+    if (form.deadline < deadlineMin) {
+      setStatus({ type: "error", message: "Срок сдачи не может быть в прошлом." });
+      setLoading(false);
+      return;
+    }
+
+    const bmin = form.budget_min === "" ? null : Number(form.budget_min);
+    const bmax = form.budget_max === "" ? null : Number(form.budget_max);
+    if (bmin === null || bmax === null || Number.isNaN(bmin) || Number.isNaN(bmax)) {
+      setStatus({ type: "error", message: "Укажите бюджет от и до." });
+      setLoading(false);
+      return;
+    }
+    if (bmin < 0 || bmax < 0) {
+      setStatus({ type: "error", message: "Бюджет не может быть отрицательным." });
+      setLoading(false);
+      return;
+    }
+    if (bmin > bmax && bmax > 0) {
+      setStatus({ type: "error", message: "Нижняя граница бюджета не может быть больше верхней." });
+      setLoading(false);
+      return;
+    }
     try {
       await jobApi.create(
         {
           ...form,
+          title,
+          description,
           deadline: form.deadline ? form.deadline : null,
           attachments: (form.attachments || "").trim(),
-          budget_min: form.budget_min ? Number(form.budget_min) : 0,
-          budget_max: form.budget_max ? Number(form.budget_max) : 0,
+          budget_min: bmin,
+          budget_max: bmax,
           skills_required: form.skills_required
             .split(",")
             .map((skill) => skill.trim())
@@ -151,6 +206,58 @@ const PostJob = () => {
           <>
             <h2>Опубликовать задание</h2>
             <p className="muted-text">Опишите задачу, бюджет и ожидаемый результат.</p>
+            {templates.length > 0 && (
+              <label className={styles.templateRow}>
+                <span>Шаблон ТЗ</span>
+                <select
+                  className={styles.templateSelect}
+                  defaultValue=""
+                  onChange={(e) => {
+                    const t = templates.find((x) => String(x.id) === e.target.value);
+                    if (!t) return;
+                    setForm((prev) => ({
+                      ...prev,
+                      title: t.title || prev.title,
+                      description: t.body || prev.description,
+                      category: t.category || prev.category,
+                    }));
+                  }}
+                >
+                  <option value="">— не выбран —</option>
+                  {templates.map((t) => (
+                    <option key={t.id} value={t.id}>
+                      {t.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            )}
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={async () => {
+                const name = window.prompt("Название шаблона");
+                if (!name?.trim()) return;
+                try {
+                  await hubApi.templateCreate(
+                    {
+                      name: name.trim(),
+                      title: form.title,
+                      body: form.description,
+                      category: form.category,
+                    },
+                    token,
+                  );
+                  const list = await hubApi.templatesList(token);
+                  setTemplates(Array.isArray(list) ? list : []);
+                  setStatus({ type: "success", message: "Шаблон сохранён" });
+                } catch (err) {
+                  setStatus({ type: "error", message: err.message });
+                }
+              }}
+            >
+              Сохранить текущее ТЗ как шаблон
+            </button>
             <button
               className="secondary-button"
               type="button"
@@ -189,6 +296,7 @@ const PostJob = () => {
               <select
                 value={form.category}
                 onChange={(event) => setField("category", event.target.value)}
+                required
               >
                 <option value="">Выберите категорию</option>
                 {Object.keys(CATEGORIES).map((item) => (
@@ -204,6 +312,7 @@ const PostJob = () => {
                 value={form.subcategory}
                 onChange={(event) => setField("subcategory", event.target.value)}
                 disabled={!form.category}
+                required
               >
                 <option value="">Выберите подкатегорию</option>
                 {(CATEGORIES[form.category] || []).map((item) => (
@@ -245,6 +354,7 @@ const PostJob = () => {
                 value={form.budget_min}
                 onChange={(event) => setField("budget_min", event.target.value)}
                 min={0}
+                required
               />
             </div>
             <div className="input-group">
@@ -254,6 +364,7 @@ const PostJob = () => {
                 value={form.budget_max}
                 onChange={(event) => setField("budget_max", event.target.value)}
                 min={0}
+                required
               />
             </div>
           </div>
@@ -262,8 +373,10 @@ const PostJob = () => {
               <label>Срок сдачи</label>
               <input
                 type="date"
+                min={todayLocalIsoDate()}
                 value={form.deadline}
                 onChange={(event) => setField("deadline", event.target.value)}
+                required
               />
             </div>
             <div className="input-group">
@@ -289,30 +402,16 @@ const PostJob = () => {
               ))}
             </datalist>
           </div>
-          <div className="input-row">
-            <label className="input-group">
-              <span>Только срочный заказ</span>
-              <input
-                type="checkbox"
-                checked={form.is_urgent}
-                onChange={(event) => setField("is_urgent", event.target.checked)}
-              />
-            </label>
-            <label className="input-group">
-              <span>Локация (текстом)</span>
-              <input
-                value={form.location}
-                onChange={(event) => setField("location", event.target.value)}
-                placeholder="Москва / удаленно"
-                list="location-suggestions"
-              />
-              <datalist id="location-suggestions">
-                {LOCATION_SUGGESTIONS.map((item) => (
-                  <option key={item} value={item} />
-                ))}
-              </datalist>
-            </label>
-          </div>
+          <label className={styles.urgentRow}>
+            <input
+              type="checkbox"
+              className={styles.urgentInput}
+              checked={form.is_urgent}
+              onChange={(event) => setField("is_urgent", event.target.checked)}
+            />
+            <span className={styles.urgentSwitch} aria-hidden="true" />
+            <span className={styles.urgentLabel}>Только срочный заказ</span>
+          </label>
           {status.message && (
             <p className={status.type === "error" ? "error-text" : "success-text"}>{status.message}</p>
           )}

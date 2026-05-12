@@ -1,3 +1,4 @@
+from django.db.models import Avg, Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import viewsets, status
 from rest_framework.permissions import AllowAny, IsAuthenticatedOrReadOnly
@@ -12,6 +13,41 @@ from .publication import sync_job_review_publication
 from .rating import compute_reputation_summary
 from .serializers import ReviewSerializer
 from .trust import recompute_trust_for_job
+
+
+class ReviewLeaderboardView(APIView):
+    """Топ пользователей по средней оценке полученных отзывов (только опубликованные)."""
+
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        limit = min(max(int(request.query_params.get("limit", 12)), 1), 50)
+        pub = Review.PublicationStatus.PUBLISHED
+        qs = (
+            User.objects.filter(is_active=True, role=User.Roles.WORKER)
+            .annotate(
+                avg_received=Avg(
+                    "reviews_received__rating",
+                    filter=Q(reviews_received__publication_status=pub),
+                ),
+                review_count=Count(
+                    "reviews_received",
+                    filter=Q(reviews_received__publication_status=pub),
+                ),
+            )
+            .filter(review_count__gte=1, avg_received__isnull=False)
+            .order_by("-avg_received", "-review_count")[:limit]
+        )
+        data = [
+            {
+                "id": u.id,
+                "username": u.username,
+                "avg_rating": round(float(u.avg_received), 2),
+                "review_count": u.review_count,
+            }
+            for u in qs
+        ]
+        return Response(data)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

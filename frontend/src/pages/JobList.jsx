@@ -1,13 +1,14 @@
 import { useEffect, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { jobApi } from "../api/client.js";
+import { hubApi, jobApi } from "../api/client.js";
 import styles from "./JobList.module.css";
 import { useAuth } from "../context/AuthContext.jsx";
 import { CATEGORY_BY_ID, CATEGORY_TREE, SUBCATEGORY_BY_ID } from "../constants/categoriesTree.js";
 import CategoryTreeFilter from "../components/CategoryTreeFilter.jsx";
 import CountryCityListFilter from "../components/CountryCityListFilter.jsx";
+import JobListCard from "../components/JobListCard.jsx";
 import { broadcastFavoritesChanged } from "../constants/favoritesSync.js";
-import { getJobCardStatus } from "../utils/jobStatusUi.js";
+import { JOB_LIST_TYPE_TABS } from "../utils/jobListUi.js";
 
 const initialFilters = {
   q: "",
@@ -32,6 +33,8 @@ const JobList = () => {
   const [status, setStatus] = useState({ type: null, message: "" });
   const [loading, setLoading] = useState(false);
   const [favorites, setFavorites] = useState([]);
+  const [saveModalOpen, setSaveModalOpen] = useState(false);
+  const [saveNameDraft, setSaveNameDraft] = useState("");
 
   const favoritesKey = `favorite_jobs_${user?.id || "guest"}`;
 
@@ -125,13 +128,25 @@ const JobList = () => {
     setAppliedFilters((prev) => ({ ...prev, type }));
   };
 
-  const toggleFavorite = (jobId) => {
-    const next = favorites.includes(jobId)
-      ? favorites.filter((id) => id !== jobId)
-      : [...favorites, jobId];
+  const toggleFavorite = async (jobId) => {
+    const removing = favorites.includes(jobId);
+    const next = removing ? favorites.filter((id) => id !== jobId) : [...favorites, jobId];
     setFavorites(next);
     localStorage.setItem(favoritesKey, JSON.stringify(next));
     broadcastFavoritesChanged(favoritesKey);
+    if (token && user) {
+      try {
+        if (removing) {
+          const list = await hubApi.favoritesList(token);
+          const row = (list || []).find((x) => Number(x.job?.id) === Number(jobId));
+          if (row) await hubApi.favoriteDelete(row.id, token);
+        } else {
+          await hubApi.favoriteAdd(jobId, token);
+        }
+      } catch {
+        /* офлайн / дубль — локальный список уже обновлён */
+      }
+    }
   };
 
   return (
@@ -140,27 +155,16 @@ const JobList = () => {
         <section className={`card ${styles.listColumn}`}>
           <h2 className={styles.pageTitle}>Вся удаленная работа</h2>
           <div className={styles.typeTabs}>
-            <button
-              className={`secondary-button ${filters.type === "order" ? styles.activeTab : ""}`}
-              type="button"
-              onClick={() => switchType("order")}
-            >
-              Заказы
-            </button>
-            <button
-              className={`secondary-button ${filters.type === "exchange" ? styles.activeTab : ""}`}
-              type="button"
-              onClick={() => switchType("exchange")}
-            >
-              Биржа
-            </button>
-            <button
-              className={`secondary-button ${filters.type === "contest" ? styles.activeTab : ""}`}
-              type="button"
-              onClick={() => switchType("contest")}
-            >
-              Розыгрыши
-            </button>
+            {JOB_LIST_TYPE_TABS.map(({ id, label }) => (
+              <button
+                key={id}
+                className={`secondary-button ${filters.type === id ? styles.activeTab : ""}`}
+                type="button"
+                onClick={() => switchType(id)}
+              >
+                {label}
+              </button>
+            ))}
           </div>
           <div className="card-header">
             <h3>Найдено заданий: {jobs.length}</h3>
@@ -174,65 +178,17 @@ const JobList = () => {
           {loading && <p>Загружаем...</p>}
           {!loading && jobs.length === 0 && <p className="muted-text">Заданий не найдено.</p>}
           <div className={styles.jobsList}>
-            {jobs.map((job) => {
-              const cardStatus = getJobCardStatus(job.status);
-              const workerResponded =
-                user?.role === "worker" && Boolean(job.my_application_status);
-              const workerApplicationsClosed =
-                user?.role === "worker" &&
-                (job.status !== "open" || Boolean(job.assigned_to));
-              const primaryCta = job.is_exchange
-                ? "Сделать ставку"
-                : job.is_contest
-                  ? "Принять участие"
-                  : "Откликнуться";
-              const primaryLabel = workerApplicationsClosed
-                ? job.assigned_to
-                  ? "Исполнитель выбран"
-                  : "Набор закрыт"
-                : workerResponded
-                  ? "Откликнулись"
-                  : primaryCta;
-              return (
-                <article key={job.id} className={styles.jobRow}>
-                  <div className={styles.jobMain}>
-                    <h4>{job.title}</h4>
-                    <p className="muted-text">{job.category || "Без категории"}</p>
-                    <p className={styles.jobSnippet}>{job.description}</p>
-                    <div className={styles.jobMeta}>
-                      <span><strong>Бюджет:</strong> {Number(job.budget_min || 0).toLocaleString("ru-RU")} - {Number(job.budget_max || 0).toLocaleString("ru-RU")} ₽</span>
-                      <span><strong>Локация:</strong> {job.city || job.location || "Любая"}</span>
-                      <span><strong>Отклики:</strong> {job.applications_count || 0}</span>
-                    </div>
-                  </div>
-                  <div className={styles.jobActions}>
-                    <span
-                      className={`status-pill ${styles.statusPill} ${styles[`statusGroup_${cardStatus.group}`]}`}
-                    >
-                      {cardStatus.label}
-                    </span>
-                    <button
-                      className={`secondary-button ${styles.actionButton}`}
-                      type="button"
-                      onClick={() => toggleFavorite(job.id)}
-                    >
-                      {favorites.includes(job.id) ? "В избранном" : "В избранное"}
-                    </button>
-                    <button
-                      className={`${workerApplicationsClosed ? "secondary-button" : "primary-button"} ${
-                        styles.actionButton
-                      } ${workerResponded && !workerApplicationsClosed ? styles.actionButtonApplied : ""} ${
-                        workerApplicationsClosed ? styles.actionButtonClosed : ""
-                      }`}
-                      type="button"
-                      onClick={() => navigate(`/jobs/${job.id}`)}
-                    >
-                      {primaryLabel}
-                    </button>
-                  </div>
-                </article>
-              );
-            })}
+            {jobs.map((job) => (
+              <JobListCard
+                key={job.id}
+                job={job}
+                user={user}
+                favorites={favorites}
+                styles={styles}
+                onToggleFavorite={toggleFavorite}
+                onOpen={(id) => navigate(`/jobs/${id}`)}
+              />
+            ))}
           </div>
         </section>
 
@@ -287,27 +243,45 @@ const JobList = () => {
               onChange={(event) => updateFilter("q", event.target.value)}
             />
 
-            <label className={styles.fieldLabel}>Дополнительные условия</label>
-            <label className={styles.checkboxRow}>
-              <input
-                type="checkbox"
-                checked={filters.urgent}
-                onChange={(event) => updateFilter("urgent", event.target.checked)}
-              />
-              Только срочные
-            </label>
-            <label className={styles.checkboxRow}>
-              <input
-                type="checkbox"
-                checked={filters.without_assignee}
-                onChange={(event) => updateFilter("without_assignee", event.target.checked)}
-              />
-              Заказы без исполнителя
-            </label>
+            <div className={styles.filterOptionsBlock}>
+              <div className={styles.filterOptionsTitle}>Дополнительные условия</div>
+              <label className={styles.filterToggleRow}>
+                <input
+                  type="checkbox"
+                  className={styles.filterToggleInput}
+                  checked={filters.urgent}
+                  onChange={(event) => updateFilter("urgent", event.target.checked)}
+                />
+                <span className={styles.filterToggleSwitch} aria-hidden />
+                <span className={styles.filterToggleText}>Только срочные</span>
+              </label>
+              <label className={styles.filterToggleRow}>
+                <input
+                  type="checkbox"
+                  className={styles.filterToggleInput}
+                  checked={filters.without_assignee}
+                  onChange={(event) => updateFilter("without_assignee", event.target.checked)}
+                />
+                <span className={styles.filterToggleSwitch} aria-hidden />
+                <span className={styles.filterToggleText}>Заказы без исполнителя</span>
+              </label>
+            </div>
 
             <button className="primary-button" type="submit" disabled={loading}>
               Найти
             </button>
+            {token ? (
+              <button
+                className="secondary-button"
+                type="button"
+                onClick={() => {
+                  setSaveNameDraft("");
+                  setSaveModalOpen(true);
+                }}
+              >
+                Сохранить поиск
+              </button>
+            ) : null}
             <button
               className="secondary-button"
               type="button"
@@ -321,6 +295,67 @@ const JobList = () => {
           </form>
         </aside>
       </div>
+
+      {saveModalOpen ? (
+        <div
+          className={styles.saveOverlay}
+          role="presentation"
+          onClick={() => setSaveModalOpen(false)}
+        >
+          <div
+            className={`card ${styles.saveModal}`}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="save-search-title"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 id="save-search-title" className={styles.saveModalTitle}>
+              Сохранить поиск
+            </h3>
+            <p className="muted-text">
+              Укажите название — поиск появится в профиле в разделе «Сохранённые поиски».
+            </p>
+            <label className={styles.saveModalLabel}>
+              Название
+              <input
+                autoFocus
+                value={saveNameDraft}
+                onChange={(e) => setSaveNameDraft(e.target.value)}
+                placeholder="Например: удалённый копирайтинг"
+              />
+            </label>
+            <div className={styles.saveModalActions}>
+              <button type="button" className="secondary-button" onClick={() => setSaveModalOpen(false)}>
+                Отмена
+              </button>
+              <button
+                type="button"
+                className="primary-button"
+                onClick={async () => {
+                  const name = saveNameDraft.trim();
+                  if (!name) {
+                    setStatus({ type: "error", message: "Введите название сохранённого поиска." });
+                    return;
+                  }
+                  try {
+                    await hubApi.savedSearchCreate({ name, query: { ...appliedFilters } }, token);
+                    setSaveModalOpen(false);
+                    setSaveNameDraft("");
+                    setStatus({
+                      type: "success",
+                      message: "Поиск сохранён. Откройте профиль → «Сохранённые поиски».",
+                    });
+                  } catch (e) {
+                    setStatus({ type: "error", message: e.message });
+                  }
+                }}
+              >
+                Сохранить
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 };

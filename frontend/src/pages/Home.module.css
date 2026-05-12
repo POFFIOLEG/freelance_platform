@@ -1,3 +1,210 @@
+.root {
+  color: var(--text-color);
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding-left: clamp(0.75rem, 2vw, 1.25rem);
+  padding-right: clamp(0.75rem, 2vw, 1.25rem);
+  box-sizing: border-box;
+}
+
+.featuredSection {
+  margin-top: 1rem;
+}
+
+.featuredGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: clamp(0.65rem, 2vw, 1rem);
+  margin-top: 1rem;
+}
+
+@media (max-width: 960px) {
+  .featuredGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .featuredGrid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.freelancerCard {
+  border-radius: 14px;
+  border: 1px solid var(--border-color);
+  background: color-mix(in srgb, var(--menu-bg) 88%, transparent);
+  box-shadow: 0 8px 28px color-mix(in srgb, var(--text-color) 6%, transparent);
+  min-height: 200px;
+  overflow: hidden;
+}
+
+.cardLink {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  padding: 0;
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.15s ease;
+}
+
+.cardLink:hover {
+  background: var(--selection-bg);
+}
+
+.cardCoverWrap {
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  max-height: 140px;
+  overflow: hidden;
+  background: var(--selection-bg);
+  border-bottom: 1px solid var(--border-color);
+}
+
+.cardCoverImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cardBody {
+  padding: 0.85rem 0.95rem;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.cardHeader {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+}
+
+.avatarWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.avatar,
+.avatarPlaceholder {
+  width: 52px;
+  height: 52px;
+  border-radius: 999px;
+  object-fit: cover;
+}
+
+.avatarPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--selection-bg);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.proBadge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--on-accent-text);
+  background: #16a34a;
+  border-radius: 999px;
+  padding: 0.12rem 0.28rem;
+  border: 2px solid var(--menu-bg);
+}
+
+.nameBlock {
+  min-width: 0;
+}
+
+.nameRow {
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.displayName {
+  font-size: 0.98rem;
+  line-height: 1.25;
+}
+
+.verifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.35rem;
+  height: 1.35rem;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #0ea5e9, #0369a1);
+  color: #fff;
+  font-size: 0.75rem;
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.45);
+}
+
+.specPill {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  margin-top: 0.35rem;
+  padding: 0.18rem 0.5rem;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  background: color-mix(in srgb, #0ea5e9 18%, transparent);
+  color: var(--text-color);
+}
+
+.specIcon {
+  font-size: 0.65rem;
+  opacity: 0.85;
+}
+
+.pitchList {
+  list-style: none;
+  margin: 0.65rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.82rem;
+  line-height: 1.35;
+  color: color-mix(in srgb, var(--text-color) 88%, transparent);
+}
+
+.pitchList li {
+  display: flex;
+  gap: 0.35rem;
+  align-items: flex-start;
+}
+
+.pitchIcon {
+  flex-shrink: 0;
+  opacity: 0.75;
+  margin-top: 0.06rem;
+}
+
+.emptyCard {
+  height: 100%;
+  min-height: 180px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 1rem;
+}
+
+.emptyTitle {
+  font-weight: 600;
+}
+
 .highlights-grid {
-    color: var(--text-color);
+  color: var(--text-color);
 }

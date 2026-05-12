@@ -109,6 +109,10 @@ const Register = () => {
               onChange={(event) => setField("password", event.target.value)}
               required
             />
+            <p className="muted-text" style={{ marginTop: "0.35rem", fontSize: "0.9rem" }}>
+              Не короче 8 символов, не только цифры, нужна хотя бы одна буква, без типовых паролей вроде
+              «password» / «qwerty».
+            </p>
           </div>
           <div className="input-group">
             <label>Роль</label>

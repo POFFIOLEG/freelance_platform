@@ -14,20 +14,55 @@
   align-items: center;
 }
 
-.avatar {
+.avatarWrap {
   width: 90px;
   height: 90px;
   border-radius: 14px;
   border: 1px solid var(--soft-border);
+  overflow: hidden;
+  flex-shrink: 0;
+  background: color-mix(in srgb, var(--surface-bg) 80%, transparent);
+}
+
+.avatarImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.avatar {
+  width: 100%;
+  height: 100%;
+  border-radius: 0;
+  border: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
   font-size: 2rem;
-  background: color-mix(in srgb, var(--surface-bg) 80%, transparent);
+  background: transparent;
 }
 
-.profileMeta h2 {
+.profileNameRow {
   margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+}
+
+.profileVerifiedBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 999px;
+  background: linear-gradient(145deg, #0ea5e9, #0369a1);
+  color: #fff;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+  box-shadow: 0 1px 4px rgba(14, 165, 233, 0.4);
 }
 
 .profileStats {
@@ -379,6 +414,264 @@
 
 .confirmInput {
   border: 1px solid color-mix(in srgb, red 35%, var(--soft-border));
+}
+
+.savedSearchList {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.savedSearchRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.savedSearchActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.portfolioSettingsBlock {
+  margin-top: 0.35rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--soft-border);
+}
+
+.portfolioSettingsTitle {
+  margin: 0 0 0.35rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.portfolioSettingsList {
+  list-style: none;
+  margin: 0 0 0.75rem;
+  padding: 0;
+}
+
+.portfolioSettingsRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.55rem 0;
+  border-bottom: 1px solid var(--soft-border);
+  font-size: 0.92rem;
+}
+
+.portfolioSettingsLink {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.84rem;
+  color: var(--link-color);
+  word-break: break-all;
+}
+
+.promoColumn {
+  max-width: 36rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+}
+
+.promoHeader {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.promoTitle {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.promoLead {
+  margin: 0;
+  font-size: 0.92rem;
+}
+
+.promoSection {
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid var(--soft-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-bg) 88%, transparent);
+}
+
+.promoSection h4 {
+  margin: 0 0 0.15rem;
+  font-size: 1rem;
+  font-weight: 600;
+}
+
+.promoSection > input,
+.promoSection > textarea {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.promoActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  margin-top: 0.25rem;
+}
+
+.promoPortfolioAnchor {
+  scroll-margin-top: 5.5rem;
+}
+
+.promoPortfolioList {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.promoPortfolioRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.45rem 0;
+  border-bottom: 1px solid var(--soft-border);
+  font-size: 0.92rem;
+}
+
+.settingsAvatarBlock {
+  padding-bottom: 1rem;
+  margin-bottom: 0.75rem;
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.settingsAvatarBlock > span {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.settingsAvatarPreview {
+  width: 72px;
+  height: 72px;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  overflow: hidden;
+  margin-bottom: 0.65rem;
+  background: color-mix(in srgb, var(--surface-bg) 80%, transparent);
+}
+
+.settingsAvatarPreviewImg {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.settingsAvatarPlaceholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.kycDocForm {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-top: 0.35rem;
+}
+
+.kycDocHeading {
+  margin: 1rem 0 0.35rem;
+}
+
+.kycUploadBlock {
+  margin-bottom: 0.85rem;
+}
+
+.kycUploadLabel {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+  font-size: 0.92rem;
+}
+
+.kycDocFormRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.kycDocList {
+  list-style: none;
+  margin: 0.75rem 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+
+.kycDocList li {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  align-items: center;
+  font-size: 0.92rem;
+}
+
+.promoCardCoverBlock {
+  margin-bottom: 1rem;
+  padding-bottom: 1rem;
+  border-bottom: 1px solid var(--soft-border);
+}
+
+.promoCardCoverLabel {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 0.35rem;
+}
+
+.promoCardCoverPreview {
+  width: 100%;
+  max-width: 420px;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+  border-radius: 12px;
+  border: 1px solid var(--soft-border);
+  margin-bottom: 0.65rem;
+  display: block;
+}
+
+@media (max-width: 720px) {
+  .profileHeader {
+    grid-template-columns: 72px 1fr;
+    grid-template-rows: auto auto;
+  }
+
+  .profileStats {
+    grid-column: 1 / -1;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 1000px) {

@@ -4,10 +4,13 @@
 
 .chatShell {
   display: grid;
-  grid-template-columns: 300px 1fr;
+  grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
   gap: 1rem;
-  min-height: 620px;
+  align-items: stretch;
+  min-height: min(620px, calc(100vh - 120px));
+  max-height: min(760px, calc(100vh - 120px));
   padding: 1rem;
+  box-sizing: border-box;
 }
 
 .chatList {
@@ -16,7 +19,9 @@
   background: color-mix(in srgb, var(--surface-bg) 85%, transparent);
   display: flex;
   flex-direction: column;
-  min-height: 560px;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
 }
 
 .chatListHeader {
@@ -101,29 +106,57 @@
   border-radius: 16px;
   display: flex;
   flex-direction: column;
-  min-height: 560px;
+  flex: 1;
+  min-height: 0;
+  max-height: min(720px, calc(100vh - 140px));
   padding: 0.85rem;
 }
 
 .chatPaneHeader {
+  flex-shrink: 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
   border-bottom: 1px solid var(--chat-border);
   padding-bottom: 0.65rem;
   margin-bottom: 0.85rem;
 }
 
-.chatPaneHeader h3 {
+.chatPaneHeaderText {
+  flex: 1;
+  min-width: 0;
+}
+
+.chatPaneHeaderText h3 {
   margin: 0;
 }
 
-.messagesContainer {
+.chatPaneHeader .attachWrap .attachMenu {
+  left: auto;
+  right: 0;
+  bottom: auto;
+  top: calc(100% + 6px);
+}
+
+.messagesScroll {
   flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
   border: 1px solid var(--chat-border);
   border-radius: 12px;
-  padding: 0.8rem;
-  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+.messagesInner {
+  margin-top: auto;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
+  padding: 0.8rem;
 }
 
 .messageRow {
@@ -166,27 +199,155 @@
   margin: 0;
 }
 
+.attachLinks {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  margin-top: 0.35rem;
+}
+
+.attachLinks a {
+  font-size: 0.88rem;
+}
+
 .chatForm {
+  flex-shrink: 0;
   margin-top: 0.8rem;
   display: flex;
   flex-direction: column;
   gap: 0.55rem;
 }
 
+.composeRow {
+  width: 100%;
+}
+
+.composeTextarea {
+  width: 100%;
+  min-width: 0;
+  resize: vertical;
+  max-height: 220px;
+  box-sizing: border-box;
+}
+
+.attachChips {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+}
+
+.attachChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.25rem 0.45rem;
+  border-radius: 8px;
+  border: 1px solid var(--chat-border);
+  background: color-mix(in srgb, var(--surface-bg) 90%, transparent);
+  max-width: 100%;
+}
+
+.attachChipRemove {
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.1rem;
+  line-height: 1;
+  padding: 0 0.15rem;
+}
+
+.attachWrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.attachToggle {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--chat-border);
+  background: color-mix(in srgb, var(--surface-bg) 85%, transparent);
+  color: var(--text-color);
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.attachToggle:hover {
+  background: var(--selection-bg);
+}
+
+.attachMenu {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 0;
+  min-width: 160px;
+  border-radius: 12px;
+  border: 1px solid var(--chat-border);
+  background: var(--surface-bg, #1e1e1e);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  z-index: 5;
+  overflow: hidden;
+}
+
+.attachMenuItem {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border: none;
+  background: transparent;
+  color: var(--text-color);
+  cursor: pointer;
+  font-size: 0.95rem;
+}
+
+.attachMenuItem:hover {
+  background: var(--selection-bg);
+}
+
+.hiddenFile {
+  position: fixed;
+  left: -9999px;
+  top: 0;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
 @media (max-width: 900px) {
   .chatShell {
     grid-template-columns: 1fr;
+    max-height: none;
+    min-height: 0;
   }
 
   .chatList {
-    min-height: 220px;
+    min-height: 200px;
+    max-height: min(280px, 40vh);
   }
 
   .chatPane {
-    min-height: 460px;
+    max-height: none;
+    min-height: min(520px, 70vh);
   }
 
   .messageBubble {
-    max-width: 92%;
+    max-width: min(92%, 100%);
+  }
+
+  .chatPaneHeader {
+    align-items: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .chatShell {
+    padding: 0.65rem;
   }
 }
