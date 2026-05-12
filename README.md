@@ -8,7 +8,7 @@
 
 | Часть | Технологии |
 |--------|------------|
-| Backend | Python 3.12 (рекомендуется), Django 5.1, Django REST Framework 3.15, Django Channels 4.2 + Daphne (ASGI, WebSocket), SQLite по умолчанию или PostgreSQL через `DATABASE_URL` |
+| Backend | Python **3.12–3.14** (один `backend/requirements.txt`; в Docker — 3.12). Django 5.1, DRF 3.15, Channels 4.2 + Daphne, SQLite по умолчанию или PostgreSQL через `DATABASE_URL` |
 | Frontend | React 19, Vite 6, React Router 7 |
 | Инфраструктура (опционально) | Docker Compose (PostgreSQL 16, pgAdmin, backend в контейнере) |
 
@@ -21,7 +21,7 @@
 | Компонент | Минимум |
 |-----------|---------|
 | Git | для клонирования репозитория |
-| Python | 3.11 или 3.12 (в Docker-образе backend указан 3.12) |
+| Python | **3.12, 3.13 или 3.14** — все зависимости ставятся одной командой `pip install -r backend/requirements.txt` (в т.ч. wheels для Pillow и `psycopg2-binary`). В Docker-образе backend зафиксирован **Python 3.12**. |
 | Node.js | 20 LTS или новее (для Vite 6) |
 | npm | идёт вместе с Node |
 
@@ -31,15 +31,9 @@
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-**macOS / Linux.** Для локального PostgreSQL после шага с зависимостями выполните `pip install -r requirements-postgres.txt` (или установите заголовки `libpq`, если pip всё же собирает драйвер из исходников).
+**Зависимости.** Используется **один** файл `backend/requirements.txt`: Django, Channels, **Pillow 12.2** (готовые сборки для 3.12–3.14 на Windows), **psycopg2-binary** для PostgreSQL. Если `DATABASE_URL` в `.env` не задан, Django работает с **SQLite** — драйвер Postgres просто не используется.
 
-**Зависимости и PostgreSQL.** В `requirements.txt` нет пакета `psycopg2-binary`: на Windows без готового wheel для вашей версии Python pip пытается сборку из исходников и падает с `pg_config executable not found`. Для **только SQLite** достаточно `pip install -r requirements.txt`. Если в `.env` указан **`DATABASE_URL`** (локальный или удалённый Postgres), дополнительно выполните из папки `backend`:
-
-```bash
-pip install -r requirements-postgres.txt
-```
-
-В Docker Compose backend по-прежнему ставит зависимости из `requirements-postgres.txt`.
+**macOS / Linux.** Обычно достаточно `pip install -r requirements.txt`. Если pip когда‑либо попытается **собрать** `psycopg2` из исходников, поставьте dev-пакет PostgreSQL (например `libpq-dev` в Debian/Ubuntu).
 
 ---
 
@@ -98,17 +92,13 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 CSRF_TRUSTED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-**PostgreSQL вместо SQLite** (опционально): в `.env` задайте строку подключения и установите драйвер:
+**PostgreSQL вместо SQLite** (опционально): в `.env` укажите строку подключения. Зависимости уже установлены на шаге 1 (`pip install -r requirements.txt`).
 
 ```env
 DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DBNAME
 ```
 
-```bash
-pip install -r requirements-postgres.txt
-```
-
-Без `DATABASE_URL` используется файл `backend/db.sqlite3`, дополнительный файл зависимостей не нужен.
+Без `DATABASE_URL` используется файл `backend/db.sqlite3`.
 
 ---
 
@@ -294,8 +284,9 @@ npm run build
 | 403 на POST при логине с другого origin | `CSRF_TRUSTED_ORIGINS` |
 | WebSocket не соединяется | Backend на ASGI (`runserver` с daphne в `INSTALLED_APPS` или явный `daphne`); один процесс с InMemory channel layer |
 | `Activate.ps1` заблокирован | `Set-ExecutionPolicy RemoteSigned` для CurrentUser |
-| `pg_config executable not found` при `pip install` (Windows) | Используйте только `pip install -r requirements.txt` для SQLite. Драйвер Postgres: `pip install -r requirements-postgres.txt`; при отсутствии wheel — Python 3.12 с [python.org](https://www.python.org/downloads/) или установите [PostgreSQL](https://www.postgresql.org/download/windows/) (в PATH появится `pg_config`). |
-| Ошибка при `migrate` в Docker | `docker compose logs backend` — актуальные `requirements.txt` и `requirements-postgres.txt` в образе |
+| `Pillow` / `zlib` при сборке на Windows, Python 3.14 | Обновите зависимости из репозитория (`Pillow==12.2.0`). Либо поставьте **Python 3.13 или 3.12** и пересоздайте venv — меньше сюрпризов с колёсами. |
+| `pg_config executable not found` при установке `psycopg2-binary` | Убедитесь, что Python **3.12–3.14** с [python.org](https://www.python.org/downloads/) и актуальный pip; в `requirements.txt` зафиксирована версия с wheels. На нестандартных сборках Python может не быть wheel — тогда поставьте [PostgreSQL](https://www.postgresql.org/download/) (в PATH появится `pg_config`) или используйте официальный Python 3.12/3.13. |
+| Ошибка при `migrate` в Docker | `docker compose logs backend` — актуальный `backend/requirements.txt` и успешный `pip install` в логах старта контейнера |
 
 ---
 

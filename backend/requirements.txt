@@ -1,11 +1,13 @@
+# Интерпретатор: Python 3.12, 3.13 или 3.14 (Windows / Linux / macOS).
+# Один файл: и SQLite (по умолчанию), и PostgreSQL при DATABASE_URL (psycopg2-binary с готовыми wheels для 3.12–3.14).
 Django==5.1.2
 djangorestframework==3.15.2
 dj-database-url==2.3.0
-# PostgreSQL: см. requirements-postgres.txt (psycopg2-binary; на Windows без wheel pip пытается сборку и требует pg_config)
+psycopg2-binary==2.9.12
 python-dotenv==1.0.1
 django-cors-headers==4.6.0
-Pillow==11.0.0
+# Pillow 11.x без wheel для Python 3.14 на Windows → сборка и ошибка zlib. 12.x — wheels 3.12–3.14.
+Pillow==12.2.0
 channels==4.2.0
 daphne==4.1.2
 openpyxl==3.1.5
-
