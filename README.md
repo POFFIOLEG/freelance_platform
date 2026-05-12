@@ -31,7 +31,15 @@
 Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser
 ```
 
-**macOS / Linux.** Дополнительно может понадобиться пакет для сборки `psycopg2` только если вы ставите PostgreSQL локально (заголовки `libpq`).
+**macOS / Linux.** Для локального PostgreSQL после шага с зависимостями выполните `pip install -r requirements-postgres.txt` (или установите заголовки `libpq`, если pip всё же собирает драйвер из исходников).
+
+**Зависимости и PostgreSQL.** В `requirements.txt` нет пакета `psycopg2-binary`: на Windows без готового wheel для вашей версии Python pip пытается сборку из исходников и падает с `pg_config executable not found`. Для **только SQLite** достаточно `pip install -r requirements.txt`. Если в `.env` указан **`DATABASE_URL`** (локальный или удалённый Postgres), дополнительно выполните из папки `backend`:
+
+```bash
+pip install -r requirements-postgres.txt
+```
+
+В Docker Compose backend по-прежнему ставит зависимости из `requirements-postgres.txt`.
 
 ---
 
@@ -90,13 +98,17 @@ CORS_ALLOWED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 CSRF_TRUSTED_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
 ```
 
-**PostgreSQL вместо SQLite** (опционально):
+**PostgreSQL вместо SQLite** (опционально): в `.env` задайте строку подключения и установите драйвер:
 
 ```env
 DATABASE_URL=postgres://USER:PASSWORD@HOST:5432/DBNAME
 ```
 
-Без `DATABASE_URL` используется файл `backend/db.sqlite3`.
+```bash
+pip install -r requirements-postgres.txt
+```
+
+Без `DATABASE_URL` используется файл `backend/db.sqlite3`, дополнительный файл зависимостей не нужен.
 
 ---
 
@@ -282,7 +294,8 @@ npm run build
 | 403 на POST при логине с другого origin | `CSRF_TRUSTED_ORIGINS` |
 | WebSocket не соединяется | Backend на ASGI (`runserver` с daphne в `INSTALLED_APPS` или явный `daphne`); один процесс с InMemory channel layer |
 | `Activate.ps1` заблокирован | `Set-ExecutionPolicy RemoteSigned` для CurrentUser |
-| Ошибка при `migrate` в Docker | `docker compose logs backend` — часто нужен актуальный `requirements.txt` в образе |
+| `pg_config executable not found` при `pip install` (Windows) | Используйте только `pip install -r requirements.txt` для SQLite. Драйвер Postgres: `pip install -r requirements-postgres.txt`; при отсутствии wheel — Python 3.12 с [python.org](https://www.python.org/downloads/) или установите [PostgreSQL](https://www.postgresql.org/download/windows/) (в PATH появится `pg_config`). |
+| Ошибка при `migrate` в Docker | `docker compose logs backend` — актуальные `requirements.txt` и `requirements-postgres.txt` в образе |
 
 ---
 

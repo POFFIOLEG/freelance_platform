@@ -25,7 +25,7 @@ services:
     restart: unless-stopped
     # pip install: после volume ./backend образ может быть старым, а INSTALLED_APPS требует daphne/channels.
     # Если migrate падает, runserver не запускается — смотрите логи: docker compose logs backend
-    command: sh -c "pip install --no-cache-dir -r requirements.txt && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+    command: sh -c "pip install --no-cache-dir -r requirements-postgres.txt && python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
     environment:
       DJANGO_SETTINGS_MODULE: "config.settings"
       DJANGO_DEBUG: "true"

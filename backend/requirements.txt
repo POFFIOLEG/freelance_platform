@@ -1,7 +1,7 @@
 Django==5.1.2
 djangorestframework==3.15.2
 dj-database-url==2.3.0
-psycopg2-binary==2.9.10
+# PostgreSQL: см. requirements-postgres.txt (psycopg2-binary; на Windows без wheel pip пытается сборку и требует pg_config)
 python-dotenv==1.0.1
 django-cors-headers==4.6.0
 Pillow==11.0.0

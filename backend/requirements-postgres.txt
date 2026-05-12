@@ -1,0 +1,4 @@
+# Драйвер PostgreSQL. Нужен, если задан DATABASE_URL (Docker Compose, прод).
+# Локально только SQLite: достаточно pip install -r requirements.txt
+-r requirements.txt
+psycopg2-binary==2.9.12
