@@ -1,5 +1,3 @@
-"""Веса отзывов, байесовское сглаживание публичного рейтинга и внутренний скоринг."""
-
 from __future__ import annotations
 
 import math
@@ -116,9 +114,6 @@ def _worker_acceptance_ratio_percent(user) -> float:
 
 
 def compute_internal_score(user, now=None) -> float:
-    """
-    Внутренний скоринг 0–100 для ранжирования (не дублирует звёзды 1:1).
-    """
     now = now or timezone.now()
     agg = aggregate_review_weights_for_user(user.id, now, only_published=True)
     wr = agg["weighted_rating_raw"] or 3.0

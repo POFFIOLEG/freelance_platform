@@ -1,5 +1,3 @@
-"""Сериализаторы работ портфолио: обложка, до 4 вложений, размещение в списке."""
-
 import json
 import os
 
@@ -16,7 +14,6 @@ ALLOWED_GALLERY_EXT = {".jpg", ".jpeg", ".png", ".gif", ".webp", ".mp4", ".webm"
 
 
 def _parse_tools_skills(data) -> list[str]:
-    """Читает tools_skills из request.data (dict, QueryDict и т.п.)."""
     if data is None or not hasattr(data, "get"):
         return []
     raw = data.get("tools_skills")

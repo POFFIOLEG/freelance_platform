@@ -1,5 +1,3 @@
-"""HTTP-утилиты для антифрода (IP; устройство и платёжный метод — при появлении данных)."""
-
 
 def get_client_ip(request):
     xff = request.META.get("HTTP_X_FORWARDED_FOR")

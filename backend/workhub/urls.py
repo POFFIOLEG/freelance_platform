@@ -1,4 +1,3 @@
-"""Маршруты расширений: избранное, шаблоны, календарь, модерация, push-устройства, featured-слоты."""
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 

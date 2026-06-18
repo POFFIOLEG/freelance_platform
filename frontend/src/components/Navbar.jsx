@@ -24,7 +24,6 @@ import { dismissNotification, pollPlatformNotifications } from "../utils/platfor
 import { playNotificationSound, unlockNotificationAudio } from "../utils/notificationSound.js";
 import { useNotifySocket } from "../hooks/useNotifySocket.js";
 
-/** id задания из маршрута вида /jobs/12 или /jobs/12#... */
 function jobIdFromJobsPath(routeOrPath) {
   if (!routeOrPath || typeof routeOrPath !== "string") return null;
   const pathOnly = routeOrPath.split("#")[0].split("?")[0];
@@ -174,7 +173,7 @@ const Navbar = () => {
       unlockNotificationAudio();
       playNotificationSound();
       if (user && token) {
-        pollPlatformNotifications(user, token)
+        pollPlatformNotifications(user, token, { deep: true })
           .then((next) => {
             setNotifications((prev) => {
               const merged = appendPersistedPushFromPrev(
@@ -252,47 +251,65 @@ const Navbar = () => {
 
   const dashboardErrorLogged = useRef(false);
   const previousNotifyIdsRef = useRef(null);
+  const notifyBackoffUntilRef = useRef(0);
 
   useEffect(() => {
     if (!user) {
       setNotifications([]);
       previousNotifyIdsRef.current = null;
+      notifyBackoffUntilRef.current = 0;
       return;
     }
 
     previousNotifyIdsRef.current = null;
     dashboardErrorLogged.current = false;
+    notifyBackoffUntilRef.current = 0;
     let isUnmounted = false;
-    const loadNotifications = async () => {
+    let intervalId = null;
+
+    const applyNotifications = (next) => {
+      setNotifications((prev) => {
+        const merged = appendPersistedPushFromPrev(next, prev);
+        const prevIds = previousNotifyIdsRef.current;
+        if (prevIds !== null) {
+          const hasNew = merged.some((n) => !prevIds.has(n.id));
+          if (hasNew) playNotificationSound();
+        }
+        previousNotifyIdsRef.current = new Set(merged.map((n) => n.id));
+        return merged;
+      });
+    };
+
+    const loadNotifications = async ({ deep = false } = {}) => {
+      if (Date.now() < notifyBackoffUntilRef.current) return;
       try {
-        const next = await pollPlatformNotifications(user, token);
+        const next = await pollPlatformNotifications(user, token, { deep });
         if (isUnmounted) return;
         dashboardErrorLogged.current = false;
-
-        setNotifications((prev) => {
-          const merged = appendPersistedPushFromPrev(next, prev);
-          const prevIds = previousNotifyIdsRef.current;
-          if (prevIds !== null) {
-            const hasNew = merged.some((n) => !prevIds.has(n.id));
-            if (hasNew) playNotificationSound();
-          }
-          previousNotifyIdsRef.current = new Set(merged.map((n) => n.id));
-          return merged;
-        });
+        notifyBackoffUntilRef.current = 0;
+        applyNotifications(next);
       } catch (error) {
+        if (error?.status === 429) {
+          const waitSec = Number(String(error.message).match(/(\d+)\s*с/)?.[1]) || 120;
+          notifyBackoffUntilRef.current = Date.now() + waitSec * 1000;
+          if (!dashboardErrorLogged.current) {
+            console.warn(error);
+            dashboardErrorLogged.current = true;
+          }
+          return;
+        }
         if (!dashboardErrorLogged.current) {
           console.error(error);
           dashboardErrorLogged.current = true;
         }
-        if (!isUnmounted) setNotifications([]);
       }
     };
 
-    loadNotifications();
-    const interval = setInterval(loadNotifications, 8000);
+    loadNotifications({ deep: true });
+    intervalId = setInterval(() => loadNotifications({ deep: false }), 60000);
     return () => {
       isUnmounted = true;
-      clearInterval(interval);
+      if (intervalId) clearInterval(intervalId);
     };
   }, [user, token]);
 
@@ -355,6 +372,12 @@ const Navbar = () => {
               <Link to="/my-applications" onClick={close} className={styles.navLink}>
                 <FaBriefcase />
                 Мои отклики
+              </Link>
+            ) : null}
+            {user?.role === "employer" ? (
+              <Link to="/profile?tab=jobs" onClick={close} className={styles.navLink}>
+                <FaBriefcase />
+                Мои задания
               </Link>
             ) : null}
             <Link to="/chat" onClick={close} className={styles.navLink}>

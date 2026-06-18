@@ -1,4 +1,3 @@
-"""Сообщения по заданию: список и создание (в т.ч. вложения); отдельный лимит на POST — chat_send."""
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
@@ -18,7 +17,6 @@ CHAT_CLOSED_DETAIL = (
 
 
 def _can_access_job_chat(job, user):
-    """Переписка по сделке только при активном назначении (после снятия исполнителя — недоступна)."""
     if job.assigned_to_id is None:
         return False
     return user.id in (job.employer_id, job.assigned_to_id)

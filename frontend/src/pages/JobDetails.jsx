@@ -9,7 +9,6 @@ import styles from "./JobDetails.module.css";
 const MAX_APPLY_LEN = 5000;
 const MAX_SUBMIT_ATTACH = 8;
 
-/** Ссылки из поля материалов (несколько URL через перенос строки). */
 function parseDeliverableUrls(raw) {
   if (!raw || typeof raw !== "string") return [];
   return raw
@@ -18,7 +17,6 @@ function parseDeliverableUrls(raw) {
     .filter((s) => /^https?:\/\//i.test(s));
 }
 
-/** Для заказчика: по текущему исполнителю показываем только последнюю сдачу (остальные скрыты). */
 function submissionsVisibleToEmployer(job, submissions) {
   const wid = job?.assigned_to?.id;
   if (wid == null || !Array.isArray(submissions)) return submissions;

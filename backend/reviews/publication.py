@@ -1,5 +1,3 @@
-"""Двусторонняя публикация отзывов и дедлайн после закрытия контракта."""
-
 from __future__ import annotations
 
 from datetime import timedelta
@@ -18,11 +16,6 @@ def contract_close_timestamp(job: Job):
 
 
 def sync_job_review_publication(job: Job) -> None:
-    """
-    Публикует отзывы по заданию, если:
-    - оба участника оставили отзыв (взаимная публикация), или
-    - с момента закрытия контракта прошло 14 дней (остаётся то, что успели оставить).
-    """
     reviews = list(Review.objects.filter(job_id=job.pk))
     if not reviews:
         return

@@ -42,10 +42,6 @@ class Message(models.Model):
 
 class MessageAttachment(models.Model):
 
-    """Несколько файлов к одному сообщению чата."""
-
-
-
     message = models.ForeignKey(Message, on_delete=models.CASCADE, related_name="attachment_files")
 
     file = models.FileField(upload_to="chat_attachments/")

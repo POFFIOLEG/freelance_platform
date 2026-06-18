@@ -50,8 +50,6 @@ class MessageSerializer(serializers.ModelSerializer):
 
     def get_attachment(self, obj):
 
-        """Первый файл (совместимость со старыми клиентами)."""
-
         urls = self.get_attachments(obj)
 
         return urls[0] if urls else None

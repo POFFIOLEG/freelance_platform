@@ -39,11 +39,8 @@ export function dismissNotification(userId, notificationId) {
   writeNotifyState(userId, s);
 }
 
-/**
- * Собирает актуальные уведомления (отклик, назначение, чат, сдача работы, доработка, снятие исполнителя, отзыв).
- * Обновляет снимки в localStorage.
- */
-export async function pollPlatformNotifications(user, token) {
+// deep: false — только dashboard, без обхода чатов/отзывов
+export async function pollPlatformNotifications(user, token, { deep = true } = {}) {
   const uid = Number(user.id);
   const uidKey = String(user.id);
   const prev = readNotifyState(uidKey);
@@ -196,7 +193,7 @@ export async function pollPlatformNotifications(user, token) {
     partyById.set(String(j.id), j);
   }
 
-  for (const job of partyById.values()) {
+  if (deep) for (const job of partyById.values()) {
     if (job.status !== "completed") continue;
     if (next.dismissed[`review:${job.id}`]) continue;
     try {
@@ -223,7 +220,7 @@ export async function pollPlatformNotifications(user, token) {
     chatJobIds.add(String(j.id));
   }
 
-  for (const jobId of chatJobIds) {
+  if (deep) for (const jobId of chatJobIds) {
     let last = null;
     try {
       const list = await chatApi.list(jobId, token);

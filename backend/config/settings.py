@@ -20,8 +20,7 @@ ALLOWED_HOSTS = [
     if host.strip()
 ]
 
-# В DEBUG разрешаем любой Host (удобно при доступе по LAN IP / другому имени машины).
-# В продакшене задайте DJANGO_ALLOWED_HOSTS явным списком и DEBUG=false.
+# DEBUG: любой Host; в проде — явный ALLOWED_HOSTS
 if DEBUG and "*" not in ALLOWED_HOSTS:
     ALLOWED_HOSTS = [*ALLOWED_HOSTS, "*"]
 
@@ -109,7 +108,7 @@ else:
         }
     }
 
-# Сообщения об ошибках пароля на русском (см. accounts.validators).
+# AUTH_PASSWORD_VALIDATORS — accounts.validators
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "accounts.validators.RussianUserAttributeSimilarityValidator"},
     {
@@ -149,12 +148,11 @@ REST_FRAMEWORK = {
         "rest_framework.throttling.UserRateThrottle",
     ],
     "DEFAULT_THROTTLE_RATES": {
-        "anon": "120/hour",
-        "user": "2000/hour",
+        "anon": "300/hour" if DEBUG else "120/hour",
+        "user": "10000/hour" if DEBUG else "2000/hour",
         "job_create": "15/hour",
         "job_apply": "40/hour",
         "chat_send": "120/hour",
-        # Регистрация: слишком низкий лимит режет тесты и одну Wi‑Fi сеть; при необходимости ужесточите в проде.
         "auth_register": "60/hour",
         "auth_login": "60/hour",
         "push_register": "20/hour",

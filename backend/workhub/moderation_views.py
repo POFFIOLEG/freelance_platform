@@ -1,8 +1,3 @@
-"""
-Эндпоинты кабинета модератора: очередь заданий (pending), решение approve/reject,
-очередь KYC, просмотр загруженных документов, решение по верификации.
-Доступ только при user.is_moderator (см. accounts.permissions.IsModerator).
-"""
 from django.db import transaction
 from django.shortcuts import get_object_or_404
 from rest_framework import status

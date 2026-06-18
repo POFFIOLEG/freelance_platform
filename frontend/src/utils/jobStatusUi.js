@@ -1,4 +1,3 @@
-/** Сводка статуса задания к трём подписям для карточек */
 export const getJobCardStatus = (status) => {
   const s = status || "open";
   if (s === "completed" || s === "cancelled") {
@@ -13,7 +12,6 @@ export const getJobCardStatus = (status) => {
   return { label: "Открыто", group: "open" };
 };
 
-/** Статусы отклика (JobApplication) — для подписи «Статус отклика: …» */
 const APPLICATION_LABELS = {
   sent: "Отправлен",
   shortlisted: "В шорт-листе",
@@ -27,7 +25,6 @@ export const getApplicationStatusLabel = (status) => {
   return APPLICATION_LABELS[key] || status;
 };
 
-/** Статусы сдачи работы (WorkSubmission) */
 const SUBMISSION_LABELS = {
   sent: "На проверке",
   needs_changes: "Нужны правки",

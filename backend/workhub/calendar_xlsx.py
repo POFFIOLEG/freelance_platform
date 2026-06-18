@@ -1,4 +1,3 @@
-"""Экспорт этапов и напоминаний в Excel (.xlsx)."""
 from __future__ import annotations
 
 from io import BytesIO

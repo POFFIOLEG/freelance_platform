@@ -1,11 +1,3 @@
-"""
-Множитель доверия к отзыву (0.05–1.0) для внутреннего и публичного скоринга.
-Учитывает: совпадение IP между сторонами сделки, «обмен» за короткое время,
-однотипные оценки без текста у автора, экстремальные оценки без комментария.
-
-Платёжный метод / fingerprint устройства можно добавить при появлении полей в User/Payment.
-"""
-
 from __future__ import annotations
 
 from .models import Review
@@ -15,12 +7,12 @@ def compute_trust_multiplier(review: Review, peers: list[Review] | None = None) 
     peers = peers if peers is not None else list(Review.objects.filter(job_id=review.job_id).exclude(pk=review.pk))
     m = 1.0
 
-    # Один и тот же IP у обоих отзывов по контракту (типичный самокрут / обмен)
+    # один IP у обеих сторон
     for o in peers:
         if review.client_ip and o.client_ip and review.client_ip == o.client_ip:
             m *= 0.28
 
-    # «Обмен отзывами»: оба за короткое время, экстремальные оценки, почти без текста
+    # взаимные отзывы за 5 мин без текста
     for o in peers:
         delta = abs((review.created_at - o.created_at).total_seconds())
         if delta <= 300:
@@ -28,7 +20,7 @@ def compute_trust_multiplier(review: Review, peers: list[Review] | None = None) 
                 if len((review.comment or "").strip()) < 12 and len((o.comment or "").strip()) < 12:
                     m *= 0.42
 
-    # Паттерн автора: только «всё 5» или «всё 1» при нескольких отзывах
+    # у автора все оценки одинаковые
     hist = list(
         Review.objects.filter(reviewer_id=review.reviewer_id)
         .exclude(pk=review.pk)
@@ -39,7 +31,6 @@ def compute_trust_multiplier(review: Review, peers: list[Review] | None = None) 
         if all(x == 5 for x in ratings) or all(x == 1 for x in ratings):
             m *= 0.52
 
-    # Экстремальная оценка почти без текста
     if review.rating in (1, 5) and len((review.comment or "").strip()) < 4:
         m *= 0.82
 

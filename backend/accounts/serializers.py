@@ -9,7 +9,6 @@ from .portfolio_serializers import PortfolioItemSerializer
 
 
 class ProfileSerializer(serializers.ModelSerializer):
-    """Профиль + поля пользователя (имя, фамилия, смена пароля). В ответе также email (только чтение)."""
 
     portfolio_url = serializers.URLField(required=False, allow_blank=True)
     first_name = serializers.CharField(required=False, allow_blank=True, write_only=True)

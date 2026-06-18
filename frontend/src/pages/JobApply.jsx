@@ -1,10 +1,6 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { useAuth } from "../context/AuthContext.jsx";
 
-/**
- * Старый URL отклика: перенаправляет на карточку задания с якорем #job-apply,
- * где встроена полная форма отклика.
- */
 const JobApply = () => {
   const { jobId } = useParams();
   const { token, user } = useAuth();

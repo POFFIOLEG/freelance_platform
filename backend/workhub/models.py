@@ -4,7 +4,6 @@ from django.utils import timezone
 
 
 class FeaturedSlot(models.Model):
-    """До 30 слотов на главной; оплата демо-балансом, период 30 дней с момента продления."""
 
     FEATURED_PRICE = 100
     PERIOD_DAYS = 30
@@ -71,7 +70,6 @@ class JobTemplate(models.Model):
 
 
 class PushDevice(models.Model):
-    """Токен для push вне браузера (FCM / APNS и т.п.); отправка — через ваш backend-сервис."""
 
     class Provider(models.TextChoices):
         FCM = "fcm", "Firebase Cloud Messaging"

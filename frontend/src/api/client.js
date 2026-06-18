@@ -1,7 +1,3 @@
-/**
- * HTTP-клиент к Django REST API: authApi, jobApi, chatApi, hubApi, reviewApi.
- * Токен передаётся заголовком Authorization; FormData — для загрузки файлов без JSON.
- */
 const trimTrailingSlash = (value = "") =>
   value.endsWith("/") ? value.slice(0, -1) : value;
 
@@ -20,7 +16,7 @@ const buildHeaders = (token, extra = {}, { json = true } = {}) => {
   return headers;
 };
 
-/** Ошибка API: message — как раньше; fields — плоский объект поле → текст (валидация DRF). */
+// ApiError: message + fields (ошибки полей DRF)
 export class ApiError extends Error {
   constructor(message, { status, fields } = {}) {
     super(message);
@@ -41,7 +37,7 @@ const sanitizeServerMessage = (text) => {
     probe.includes("<title>") ||
     probe.includes("typeerror at /")
   ) {
-    return "Ошибка на сервере. Откройте логи backend; на продакшене отключите DEBUG, чтобы приходил JSON, а не HTML.";
+    return "Ошибка на сервере. Смотрите логи backend.";
   }
   if (s.length > 1200) return `${s.slice(0, 1200)}…`;
   return s;
@@ -389,7 +385,6 @@ export const chatApi = {
     });
     return apiFetch(`/api/chat/${jobId}/${q}`, { method: "GET", token });
   },
-  /** payload — JSON или FormData (текст + вложение) */
   async send(jobId, payload, token) {
     return apiFetch(`/api/chat/${jobId}/`, {
       method: "POST",
@@ -461,7 +456,6 @@ export const hubApi = {
   async pushDeviceRegister(body, token) {
     return apiFetch("/api/hub/push-devices/", { method: "POST", body, token });
   },
-  /** Скачать ICS с авторизацией (blob). */
   async downloadCalendarIcs(token) {
     const url = `${API_BASE}/api/hub/calendar/export.ics`;
     const headers = {};
@@ -473,7 +467,6 @@ export const hubApi = {
     }
     return new Blob([text], { type: "text/calendar;charset=utf-8" });
   },
-  /** Скачать календарь в Excel (.xlsx). */
   async downloadCalendarXlsx(token) {
     const url = `${API_BASE}/api/hub/calendar/export.xlsx`;
     const headers = {};

@@ -1,5 +1,3 @@
-"""Единый формат ошибок API на русском для полей и общих сообщений."""
-
 import logging
 
 from django.conf import settings

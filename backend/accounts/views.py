@@ -1,4 +1,3 @@
-"""Регистрация, вход, профиль, портфолио, аватар, KYC-документы, публичное портфолио исполнителя."""
 from django.shortcuts import get_object_or_404
 from rest_framework import generics, status
 from rest_framework.parsers import FormParser, JSONParser, MultiPartParser
@@ -95,7 +94,7 @@ class PortfolioItemListCreateView(generics.ListCreateAPIView):
         return self.request.user.profile.portfolio_items.all()
 
     def perform_create(self, serializer):
-        # profile задаётся внутри PortfolioItemSerializer.create — не передавать сюда, иначе TypeError (два profile).
+        # profile уже в serializer.create
         serializer.save()
 
 

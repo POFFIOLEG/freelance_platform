@@ -108,7 +108,6 @@ class PortfolioItem(models.Model):
 
 
 class PortfolioItemGalleryFile(models.Model):
-    """До 4 файлов на работу: изображения или короткое видео (иллюстрация процесса)."""
 
     portfolio_item = models.ForeignKey(
         PortfolioItem,
@@ -124,7 +123,6 @@ class PortfolioItemGalleryFile(models.Model):
 
 
 class KycDocument(models.Model):
-    """Файлы для верификации личности (паспорт, селфи и т.д.)."""
 
     class DocType(models.TextChoices):
         ID_FRONT = "id_front", "Документ (лицевая)"

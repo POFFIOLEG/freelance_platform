@@ -9,7 +9,6 @@ from .models import FeaturedSlot, JobReminder, JobTemplate, PushDevice, SavedSea
 
 
 class FreelancerCardSerializer(serializers.ModelSerializer):
-    """Краткие данные для карточки на главной и публичного портфолио."""
 
     profile = serializers.SerializerMethodField()
 

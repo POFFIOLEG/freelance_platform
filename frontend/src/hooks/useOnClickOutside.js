@@ -1,9 +1,5 @@
 import { useEffect, useRef } from "react";
 
-/**
- * Вызов onOutside при mousedown вне любого из переданных ref-контейнеров.
- * Ref-объекты стабильны; колбэк всегда берётся из ref, чтобы не пересоздавать подписку.
- */
 export function useOnClickOutside(onOutside, ...refs) {
   const cbRef = useRef(onOutside);
   cbRef.current = onOutside;

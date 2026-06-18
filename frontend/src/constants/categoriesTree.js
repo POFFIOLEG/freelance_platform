@@ -1,4 +1,3 @@
-/** Иерархия категорий для фильтра на странице списка заданий; источник данных — CATEGORIES. */
 import { CATEGORIES } from "./categories.js";
 
 const slugify = (value = "") =>

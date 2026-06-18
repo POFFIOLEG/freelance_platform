@@ -1,6 +1,3 @@
-/**
- * Корневой компонент: маршрутизация страниц (React Router), общая вёрстка Navbar + Footer, тема оформления.
- */
 import React from "react";
 import { BrowserRouter as Router, Navigate, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "./context/ThemeContext.jsx";

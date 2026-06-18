@@ -16,7 +16,6 @@ from .trust import recompute_trust_for_job
 
 
 class ReviewLeaderboardView(APIView):
-    """Топ пользователей по средней оценке полученных отзывов (только опубликованные)."""
 
     permission_classes = [AllowAny]
 
@@ -95,7 +94,6 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 
 class ReputationSummaryView(APIView):
-    """Публичный рейтинг (байесовское сглаживание) и внутренний скоринг для ранжирования."""
 
     permission_classes = [AllowAny]
 

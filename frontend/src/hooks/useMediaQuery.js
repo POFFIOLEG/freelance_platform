@@ -1,8 +1,5 @@
 import { useEffect, useState } from "react";
 
-/**
- * Подписка на window.matchMedia: состояние обновляется при смене ширины (вместо «спрятать в @media»).
- */
 export function useMediaQuery(query) {
   const getMatches = () =>
     typeof window !== "undefined" && typeof window.matchMedia === "function"

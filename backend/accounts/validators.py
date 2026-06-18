@@ -1,5 +1,3 @@
-"""Валидаторы паролей с сообщениями на русском (вместо стандартных Django)."""
-
 import re
 
 from django.contrib.auth.password_validation import (
@@ -59,7 +57,6 @@ class RussianNumericPasswordValidator(DjangoNumericPasswordValidator):
 
 
 class RussianComplexityValidator:
-    """Хотя бы одна буква (латиница или кириллица)."""
 
     def validate(self, password, user=None):
         if not re.search(r"[A-Za-zА-Яа-яЁё]", password):

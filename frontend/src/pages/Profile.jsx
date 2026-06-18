@@ -48,7 +48,6 @@ const defaultProfile = {
   social_vk: "",
 };
 
-/** Ключ области для сообщений — показываем только в соответствующем блоке UI. */
 const BANNER = {
   saved: "saved",
   promo: "promo",
@@ -60,7 +59,7 @@ const BANNER = {
 };
 
 const Profile = () => {
-  const { user, token, updateProfile, refreshProfile, logout } = useAuth();
+  const { user, token, updateProfile, refreshProfile, logout, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [params, setParams] = useSearchParams();
   const [form, setForm] = useState(defaultProfile);
@@ -339,6 +338,27 @@ const Profile = () => {
       setLoading(false);
     }
   };
+
+  if (authLoading) {
+    return (
+      <div className={`page auth-page ${styles.root}`}>
+        <div className="card auth-card">
+          <p className="muted-text">Загрузка профиля…</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className={`page auth-page ${styles.root}`}>
+        <div className="card auth-card">
+          <h2>Заполните профиль</h2>
+          <p>Авторизуйтесь, чтобы видеть и редактировать профиль.</p>
+        </div>
+      </div>
+    );
+  }
 
   const isEmployer = user.role === "employer";
   const jobsSource = isEmployer ? ownedJobs : appliedJobs;
@@ -1244,17 +1264,6 @@ const Profile = () => {
       </section>
     );
   };
-
-  if (!user) {
-    return (
-      <div className={`page auth-page ${styles.root}`}>
-        <div className="card auth-card">
-          <h2>Заполните профиль</h2>
-          <p>Авторизуйтесь, чтобы видеть и редактировать профиль.</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={`page ${styles.root}`}>

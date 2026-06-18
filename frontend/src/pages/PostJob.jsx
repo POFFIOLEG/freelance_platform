@@ -33,7 +33,6 @@ const initialState = {
   is_exchange: false,
 };
 
-/** Сегодняшняя дата в календаре пользователя (YYYY-MM-DD) для min у input type="date". */
 function todayLocalIsoDate() {
   const d = new Date();
   const y = d.getFullYear();

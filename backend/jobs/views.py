@@ -1,4 +1,3 @@
-"""REST API заданий: CRUD, отклики, биржа (ставки), этапы, споры, арбитраж, дашборд."""
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError
 from django.db.models import Q, Prefetch
@@ -30,7 +29,6 @@ from workhub.notify import push_to_user
 
 
 def _response_if_job_not_accepting_applications(job):
-    """Отклики и новые ставки (биржа) только пока задание открыто и исполнитель не назначен."""
     if job.assigned_to_id is not None:
         return Response(
             {
@@ -47,7 +45,6 @@ def _response_if_job_not_accepting_applications(job):
 
 
 class JobViewSet(viewsets.ModelViewSet):
-    """Основной ресурс задания; права по action (заказчик / исполнитель / арбитр), лимиты — check_throttles."""
 
     queryset = Job.objects.all().select_related("employer", "assigned_to")
     serializer_class = JobSerializer
@@ -55,7 +52,7 @@ class JobViewSet(viewsets.ModelViewSet):
     throttle_classes = [AnonRateThrottle, UserRateThrottle, ScopedRateThrottle]
 
     def check_throttles(self, request):
-        # Разные лимиты для публикации задания и отклика (ScopedRateThrottle + имя действия из action_map роутера).
+        # create и apply/bid — отдельные scope в REST_FRAMEWORK
         self.throttle_scope = None
         action_name = None
         if hasattr(self, "action_map"):
@@ -248,7 +245,7 @@ class JobViewSet(viewsets.ModelViewSet):
         if not job.is_exchange:
             return Response({"detail": "Для этого задания торги не включены"}, status=status.HTTP_400_BAD_REQUEST)
         if request.method == "GET":
-            # Только заказчик видит все ставки; иначе утечка чужих сумм между исполнителями.
+            # ставки видит только заказчик
             if job.employer != request.user:
                 return Response(status=status.HTTP_403_FORBIDDEN)
             serializer = JobBidSerializer(job.bids.select_related("worker"), many=True)
@@ -473,7 +470,6 @@ class JobViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def reject_submission(self, request, pk=None):
-        """Заказчик возвращает версию на доработку; задание снова «в работе», исполнитель может прислать новую."""
         job = self.get_object()
         if job.employer != request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)
@@ -517,8 +513,6 @@ class JobViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["post"])
     def release_assignee(self, request, pk=None):
-        """Снять исполнителя и снова открыть набор (отклики других кандидатов восстанавливаются).
-        Все сдачи результата снятого исполнителя по этому заданию удаляются."""
         job = self.get_object()
         if job.employer != request.user:
             return Response(status=status.HTTP_403_FORBIDDEN)

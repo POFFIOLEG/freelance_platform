@@ -7,10 +7,6 @@ function buildNotifyWsUrl(token) {
   return `${proto}//${u.host}/ws/notify/?token=${encodeURIComponent(token)}`;
 }
 
-/**
- * WebSocket уведомления. Для событий по заданию диспатчит `job-notify-live` на `window`.
- * Токен в query — только для локальной разработки.
- */
 export function useNotifySocket(token, onEvent) {
   const cbRef = useRef(onEvent);
   cbRef.current = onEvent;

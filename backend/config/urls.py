@@ -1,4 +1,3 @@
-"""Корневые URL: API по префиксам /api/*, админка, healthcheck, раздача media в DEBUG."""
 from django.conf import settings
 from django.conf.urls.static import static
 from django.contrib import admin

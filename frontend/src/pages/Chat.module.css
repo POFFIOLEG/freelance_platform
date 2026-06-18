@@ -7,10 +7,12 @@
   grid-template-columns: minmax(260px, 320px) minmax(0, 1fr);
   gap: 1rem;
   align-items: stretch;
+  height: min(760px, calc(100vh - 120px));
   min-height: min(620px, calc(100vh - 120px));
   max-height: min(760px, calc(100vh - 120px));
   padding: 1rem;
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .chatList {
@@ -20,11 +22,12 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  max-height: 100%;
+  height: 100%;
   overflow: hidden;
 }
 
 .chatListHeader {
+  flex-shrink: 0;
   padding: 0.85rem 1rem;
   border-bottom: 1px solid var(--chat-border);
 }
@@ -38,8 +41,11 @@
 }
 
 .chatListItems {
+  flex: 1;
+  min-height: 0;
   padding: 0.5rem;
   overflow-y: auto;
+  overflow-x: hidden;
   display: flex;
   flex-direction: column;
   gap: 0.35rem;
@@ -108,8 +114,9 @@
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  max-height: min(720px, calc(100vh - 140px));
+  height: 100%;
   padding: 0.85rem;
+  overflow: hidden;
 }
 
 .chatPaneHeader {
@@ -323,17 +330,20 @@
 @media (max-width: 900px) {
   .chatShell {
     grid-template-columns: 1fr;
+    height: auto;
     max-height: none;
     min-height: 0;
+    overflow: visible;
   }
 
   .chatList {
+    height: auto;
     min-height: 200px;
     max-height: min(280px, 40vh);
   }
 
   .chatPane {
-    max-height: none;
+    height: auto;
     min-height: min(520px, 70vh);
   }
 

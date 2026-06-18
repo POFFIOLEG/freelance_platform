@@ -1,4 +1,3 @@
-/** Событие для мгновенного обновления избранного в профиле и др. экранах (та же вкладка). */
 export const FAVORITES_STORAGE_EVENT = "taskora-favorites-changed";
 
 export function broadcastFavoritesChanged(storageKey) {

@@ -1,8 +1,3 @@
-/**
- * Мягкий двухтоновый «колокольчик» (Web Audio API, только синусоиды).
- * Без внешних файлов — после unlockNotificationAudio воспроизводится стабильно.
- */
-
 let sharedCtx = null;
 
 function getContext() {
@@ -12,7 +7,6 @@ function getContext() {
   return sharedCtx;
 }
 
-/** Вызвать после жеста пользователя (клик по колокольчику и т.д.), чтобы браузер не блокировал звук. */
 export function unlockNotificationAudio() {
   const ctx = getContext();
   if (!ctx) return;
@@ -39,10 +33,9 @@ export function playNotificationSound() {
   try {
     if (ctx.state === "suspended") void ctx.resume();
     const t0 = ctx.currentTime;
-    // Два тона в квинте (≈ C6 и G6) — коротко, без резких атак
     scheduleTone(ctx, t0, 1046.5, 0.14, 0.09);
     scheduleTone(ctx, t0 + 0.07, 1568.0, 0.16, 0.075);
   } catch {
-    /* автовоспроизведение может быть запрещено до unlock */
+    /* без unlock звук может не сыграть */
   }
 }

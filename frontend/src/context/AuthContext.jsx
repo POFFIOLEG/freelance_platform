@@ -28,9 +28,15 @@ export const AuthProvider = ({ children }) => {
         const data = await authApi.me(token);
         setUser(data);
       } catch (error) {
-        console.error(error);
-        localStorage.removeItem("auth_token");
-        setToken(null);
+        if (error?.status === 429) {
+          console.warn(error);
+        } else if (error?.status === 401 || error?.status === 403) {
+          console.error(error);
+          localStorage.removeItem("auth_token");
+          setToken(null);
+        } else {
+          console.error(error);
+        }
       } finally {
         setLoading(false);
       }
